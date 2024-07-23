@@ -4,7 +4,8 @@ use bevy::{
     color::{Color, Luminance},
     core::Name,
     prelude::{
-        Annulus, BuildChildren, Circle, Commands, Event, Mesh, ResMut, StateScoped, Transform, Trigger
+        Annulus, BuildChildren, Circle, Commands, Event, Mesh, MeshBuilder, Meshable, ResMut,
+        StateScoped, Transform, Trigger,
     },
     sprite::{ColorMaterial, MaterialMesh2dBundle, Mesh2dHandle},
 };
@@ -29,6 +30,8 @@ fn spawn_solar_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    static MESH_RESOLUTION: usize = 100;
+
     static PLANET_SCALE: f32 = 10.;
     static RADIUS_SCALE: f32 = 0.125;
     static MOON_SCALE: f32 = 5.;
@@ -40,7 +43,14 @@ fn spawn_solar_system(
         .spawn((
             Name::new("Sun"),
             MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(1_400_000.)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(1_400_000.))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(253. / 255., 184. / 255., 19. / 255.)),
                 ..Default::default()
             },
@@ -53,7 +63,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Mercury"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(4_879. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(4_879. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(183. / 255., 184. / 255., 185. / 255.)),
                 ..Default::default()
             },
@@ -63,7 +80,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Mercury - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(mercury_radius - 5., mercury_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(mercury_radius - 5., mercury_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -77,7 +101,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Venus"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(12_104. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(12_104. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(165. / 255., 124. / 255., 27. / 255.)),
                 ..Default::default()
             },
@@ -87,7 +118,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Venus - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(venus_radius - 5., venus_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(venus_radius - 5., venus_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -101,7 +139,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Moon"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(3_475. * MOON_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(3_475. * MOON_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(246. / 255., 241. / 255., 213. / 255.)),
                 ..Default::default()
             },
@@ -112,9 +157,16 @@ fn spawn_solar_system(
         .spawn((
             Name::new("Moon - Orbit Circle"),
             MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Annulus::new(moon_radius - 2., moon_radius + 2.))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Annulus::new(moon_radius - 2., moon_radius + 2.)
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: circle_color.clone(),
-            transform: Transform::from_xyz(0., 0., -2.),
+                transform: Transform::from_xyz(0., 0., -2.),
                 ..Default::default()
             },
         ))
@@ -125,7 +177,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Earth"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(12_756. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(12_756. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(79. / 255., 76. / 255., 176. / 255.)),
                 ..Default::default()
             },
@@ -137,7 +196,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Earth - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(earth_radius - 5., earth_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(earth_radius - 5., earth_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -152,7 +218,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Mars"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(6_790. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(6_790. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(240. / 255., 231. / 255., 231. / 255.)),
                 ..Default::default()
             },
@@ -162,7 +235,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Mars - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(mars_radius - 5., mars_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(mars_radius - 5., mars_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -177,7 +257,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Jupiter"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(143_000. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(143_000. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(235. / 255., 243. / 255., 246. / 255.)),
                 ..Default::default()
             },
@@ -187,7 +274,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Jupiter - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(jupiter_radius - 5., jupiter_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(jupiter_radius - 5., jupiter_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -202,7 +296,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Saturn"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(120_536. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(120_536. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(206. / 255., 184. / 255., 184. / 255.)),
                 ..Default::default()
             },
@@ -212,7 +313,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Saturn - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(saturn_radius - 5., saturn_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(saturn_radius - 5., saturn_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -227,7 +335,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Uranus"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(51_118. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(51_118. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(172. / 255., 229. / 255., 238. / 255.)),
                 ..Default::default()
             },
@@ -237,7 +352,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Uranus - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(uranus_radius - 5., uranus_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(uranus_radius - 5., uranus_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color.clone(),
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
@@ -252,7 +374,14 @@ fn spawn_solar_system(
             planet: Planet,
             name: Name::new("Neptune"),
             mat_mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(49_528. * PLANET_SCALE)))),
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scale(49_528. * PLANET_SCALE))
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
                 material: materials.add(Color::srgb(120. / 255., 192. / 255., 168. / 255.)),
                 ..Default::default()
             },
@@ -262,7 +391,14 @@ fn spawn_solar_system(
     commands.spawn((
         Name::new("Neptune - Orbit Circle"),
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Annulus::new(neptune_radius - 5., neptune_radius + 5.))),
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(neptune_radius - 5., neptune_radius + 5.)
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
             material: circle_color,
             transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
