@@ -4,60 +4,21 @@ use bevy::{
     color::{Color, Luminance},
     core::Name,
     prelude::{
-        Annulus, BuildChildren, Bundle, Circle, Commands, Component, Event, Mesh, ResMut,
-        StateScoped, Trigger,
+        Annulus, BuildChildren, Circle, Commands, Event, Mesh, ResMut, StateScoped, Trigger,
     },
-    sprite::{ColorMaterial, Material2d, MaterialMesh2dBundle, Mesh2dHandle},
+    sprite::{ColorMaterial, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::screen::Screen;
+use crate::{
+    game::planets::{Orbit, Planet, PlanetBundle},
+    screen::Screen,
+};
 
 #[derive(Event, Debug)]
 pub struct SpawnSolarSystem;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_solar_system);
-}
-
-#[derive(Component, Debug)]
-pub struct Orbit {
-    radius: f32,
-    eccentricity: f32,
-    degrees: f32,
-    period: f32,
-}
-
-impl Orbit {
-    pub const fn circle(radius: f32, period: f32) -> Self {
-        Self {
-            radius,
-            degrees: 0.,
-            eccentricity: 0.,
-            period,
-        }
-    }
-
-    pub fn increment_orbit(&mut self, passed: f32) {
-        self.degrees += 360. * (passed / self.period);
-    }
-
-    pub fn to_x_y(&self) -> (f32, f32) {
-        if self.eccentricity > 0. {
-            unimplemented!()
-        } else {
-            (
-                self.radius * self.degrees.to_radians().cos(),
-                self.radius * self.degrees.to_radians().sin(),
-            )
-        }
-    }
-}
-
-#[derive(Bundle)]
-struct PlanetBundle<M: Material2d> {
-    name: Name,
-    mat_mesh: MaterialMesh2dBundle<M>,
-    orbit: Orbit,
 }
 
 // FIXME: Fix the too many lines issue by breaking this up
@@ -89,6 +50,7 @@ fn spawn_solar_system(
     let mercury_radius = scale(57_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Mercury"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(4_879. * PLANET_SCALE)))),
@@ -110,6 +72,7 @@ fn spawn_solar_system(
 
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Venus"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(12_104. * PLANET_SCALE)))),
@@ -122,6 +85,7 @@ fn spawn_solar_system(
 
     let moon = commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Moon"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(3_475. * MOON_SCALE)))),
@@ -134,6 +98,7 @@ fn spawn_solar_system(
         .id();
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Earth"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(12_756. * PLANET_SCALE)))),
@@ -148,6 +113,7 @@ fn spawn_solar_system(
     // TODO: Add moons
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Mars"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(6_790. * PLANET_SCALE)))),
@@ -161,6 +127,7 @@ fn spawn_solar_system(
     // TODO: Add moons
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Jupiter"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(143_000. * PLANET_SCALE)))),
@@ -174,6 +141,7 @@ fn spawn_solar_system(
     // TODO: Add moons
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Saturn"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(120_536. * PLANET_SCALE)))),
@@ -187,6 +155,7 @@ fn spawn_solar_system(
     // TODO: Add moons
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Uranus"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(51_118. * PLANET_SCALE)))),
@@ -200,6 +169,7 @@ fn spawn_solar_system(
     // TODO: Add moons
     commands
         .spawn(PlanetBundle {
+            planet: Planet,
             name: Name::new("Neptune"),
             mat_mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(scale(49_528. * PLANET_SCALE)))),
