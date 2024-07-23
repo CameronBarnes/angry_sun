@@ -19,13 +19,13 @@ pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_solar_system);
 }
 
-//#[derive(Component, Debug)]
-//pub struct PlanetShadow;
+#[derive(Component, Debug)]
+pub struct PlanetShadow;
 
 static MESH_RESOLUTION: usize = 100;
 
 static PLANET_SCALE: f32 = 10.;
-static RADIUS_SCALE: f32 = 0.125;
+pub static RADIUS_SCALE: f32 = 0.125;
 static MOON_SCALE: f32 = 5.;
 static MOON_RADIUS_SCALE: f32 = 1.5;
 
@@ -68,6 +68,7 @@ fn spawn_solar_system(
         Color::srgb(183. / 255., 184. / 255., 185. / 255.),
         circle_color.clone(),
         vec![],
+        false,
     );
 
     spawn_planet(
@@ -81,6 +82,7 @@ fn spawn_solar_system(
         Color::srgb(165. / 255., 124. / 255., 27. / 255.),
         circle_color.clone(),
         vec![],
+        false,
     );
 
     let moon = spawn_planet(
@@ -94,6 +96,7 @@ fn spawn_solar_system(
         Color::srgb(246. / 255., 241. / 255., 213. / 255.),
         circle_color.clone(),
         vec![],
+        true,
     );
     spawn_planet(
         &mut commands,
@@ -106,9 +109,9 @@ fn spawn_solar_system(
         Color::srgb(79. / 255., 76. / 255., 176. / 255.),
         circle_color.clone(),
         vec![moon.0, moon.1],
+        false,
     );
 
-    // TODO: Add moons
     spawn_planet(
         &mut commands,
         &mut meshes,
@@ -117,9 +120,10 @@ fn spawn_solar_system(
         scale(288_000_000. * RADIUS_SCALE),
         scale(6_790. * PLANET_SCALE),
         687.,
-        Color::srgb(240. / 255., 231. / 255., 231. / 255.),
+        Color::srgb(193. / 255., 68. / 255., 14. / 255.),
         circle_color.clone(),
         vec![],
+        false,
     );
 
     // TODO: Add moons
@@ -131,9 +135,10 @@ fn spawn_solar_system(
         scale(780_000_000. * RADIUS_SCALE),
         scale(143_000. * PLANET_SCALE),
         4_330.6,
-        Color::srgb(235. / 255., 243. / 255., 246. / 255.),
+        Color::srgb(148. / 255., 105. / 255., 86. / 255.),
         circle_color.clone(),
         vec![],
+        false,
     );
 
     // TODO: Add moons
@@ -148,6 +153,7 @@ fn spawn_solar_system(
         Color::srgb(206. / 255., 184. / 255., 184. / 255.),
         circle_color.clone(),
         vec![],
+        false,
     );
 
     // TODO: Add moons
@@ -162,9 +168,10 @@ fn spawn_solar_system(
         Color::srgb(172. / 255., 229. / 255., 238. / 255.),
         circle_color.clone(),
         vec![],
+        false,
     );
 
-    // TODO: Add moonsca
+    // TODO: Add moons
     spawn_planet(
         &mut commands,
         &mut meshes,
@@ -176,6 +183,7 @@ fn spawn_solar_system(
         Color::srgb(120. / 255., 192. / 255., 168. / 255.),
         circle_color,
         vec![],
+        false,
     );
 }
 
@@ -190,14 +198,48 @@ fn spawn_planet<A: Material2d>(
     color: Color,
     orbit_circle: Handle<A>,
     children: Vec<Entity>,
+    moon: bool,
 ) -> (Entity, Entity) {
+    let (border_width, triangle_id) = if moon {
+        (2., None)
+    } else {
+        let sun_angle = (scaled_size / scaled_radius).atan();
+        let scaled_distance = scale(5_000_000_000. * RADIUS_SCALE);
+        let first_point = (
+            scaled_distance * sun_angle.abs().cos(),
+            scaled_distance * sun_angle.abs().sin(),
+        );
+        let second_point = (
+            scaled_distance * (sun_angle.abs() * -1.).cos(),
+            scaled_distance * (sun_angle.abs() * -1.).sin(),
+        );
+        let id = commands
+            .spawn((
+                PlanetShadow,
+                MaterialMesh2dBundle {
+                    mesh: Mesh2dHandle(meshes.add(Triangle2d::new(
+                        Vec2::splat(0.),
+                        Vec2::new(first_point.0, first_point.1),
+                        Vec2::new(second_point.0, second_point.1),
+                    ))),
+                    material: orbit_circle.clone(),
+                    transform: Transform::from_xyz(0., 0., -3.),
+                    ..Default::default()
+                },
+                StateScoped(Screen::Playing),
+            ))
+            .id();
+
+        (5., Some(id))
+    };
+
     let orbit_id = commands
         .spawn((
             Name::new("Mercury - Orbit Circle"),
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(
                     meshes.add(
-                        Annulus::new(scaled_radius - 5., scaled_radius + 5.)
+                        Annulus::new(scaled_radius - border_width, scaled_radius + border_width)
                             .mesh()
                             .resolution(MESH_RESOLUTION)
                             .build(),
@@ -211,7 +253,10 @@ fn spawn_planet<A: Material2d>(
         ))
         .id();
     let mut planet = commands.spawn(PlanetBundle {
-        planet: Planet,
+        planet: Planet {
+            shadow: triangle_id,
+            size: scaled_size,
+        },
         name,
         mat_mesh: MaterialMesh2dBundle {
             mesh: Mesh2dHandle(
@@ -234,7 +279,7 @@ fn spawn_planet<A: Material2d>(
     (planet.id(), orbit_id)
 }
 
-fn scale(original: f32) -> f32 {
-    static FACTOR: f32 = 0.0005;
+pub fn scale(original: f32) -> f32 {
+    static FACTOR: f32 = 0.005;
     (original / 2.) * FACTOR
 }
