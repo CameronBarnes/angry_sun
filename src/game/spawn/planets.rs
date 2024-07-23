@@ -4,7 +4,7 @@ use bevy::{
     color::{Color, Luminance},
     core::Name,
     prelude::{
-        Annulus, BuildChildren, Circle, Commands, Event, Mesh, ResMut, StateScoped, Trigger,
+        Annulus, BuildChildren, Circle, Commands, Event, Mesh, ResMut, StateScoped, Transform, Trigger
     },
     sprite::{ColorMaterial, MaterialMesh2dBundle, Mesh2dHandle},
 };
@@ -64,12 +64,14 @@ fn spawn_solar_system(
         Name::new("Mercury - Orbit Circle"),
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(Annulus::new(mercury_radius - 5., mercury_radius + 5.))),
-            material: circle_color,
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
             ..Default::default()
         },
         StateScoped(Screen::Playing),
     ));
 
+    let venus_radius = scale(108_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -79,10 +81,21 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(165. / 255., 124. / 255., 27. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(108_000_000. * RADIUS_SCALE), 224.7),
+            orbit: Orbit::circle(venus_radius, 224.7),
         })
         .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Venus - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(venus_radius - 5., venus_radius + 5.))),
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 
+    let moon_radius = scale(384_400. * MOON_RADIUS_SCALE);
     let moon = commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -92,10 +105,21 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(246. / 255., 241. / 255., 213. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(384_400. * MOON_RADIUS_SCALE), 27.3),
+            orbit: Orbit::circle(moon_radius, 27.3),
         })
-        .insert(StateScoped(Screen::Playing))
         .id();
+    let moon_orbit_circle = commands
+        .spawn((
+            Name::new("Moon - Orbit Circle"),
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Annulus::new(moon_radius - 2., moon_radius + 2.))),
+                material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+                ..Default::default()
+            },
+        ))
+        .id();
+    let earth_radius = scale(149_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -105,12 +129,24 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(79. / 255., 76. / 255., 176. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(149_000_000. * RADIUS_SCALE), 365.25),
+            orbit: Orbit::circle(earth_radius, 365.25),
         })
         .insert(StateScoped(Screen::Playing))
-        .add_child(moon);
+        .add_child(moon)
+        .add_child(moon_orbit_circle);
+    commands.spawn((
+        Name::new("Earth - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(earth_radius - 5., earth_radius + 5.))),
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 
     // TODO: Add moons
+    let mars_radius = scale(288_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -120,11 +156,22 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(240. / 255., 231. / 255., 231. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(288_000_000. * RADIUS_SCALE), 687.),
+            orbit: Orbit::circle(mars_radius, 687.),
         })
         .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Mars - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(mars_radius - 5., mars_radius + 5.))),
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 
     // TODO: Add moons
+    let jupiter_radius = scale(780_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -134,11 +181,22 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(235. / 255., 243. / 255., 246. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(780_000_000. * RADIUS_SCALE), 4_330.6),
+            orbit: Orbit::circle(jupiter_radius, 4_330.6),
         })
         .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Jupiter - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(jupiter_radius - 5., jupiter_radius + 5.))),
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 
     // TODO: Add moons
+    let saturn_radius = scale(1_437_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -148,11 +206,22 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(206. / 255., 184. / 255., 184. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(1_437_000_000. * RADIUS_SCALE), 10_756.),
+            orbit: Orbit::circle(saturn_radius, 10_756.),
         })
         .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Saturn - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(saturn_radius - 5., saturn_radius + 5.))),
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 
     // TODO: Add moons
+    let uranus_radius = scale(2_871_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -162,11 +231,22 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(172. / 255., 229. / 255., 238. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(2_871_000_000. * RADIUS_SCALE), 30_687.),
+            orbit: Orbit::circle(uranus_radius, 30_687.),
         })
         .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Uranus - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(uranus_radius - 5., uranus_radius + 5.))),
+            material: circle_color.clone(),
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 
     // TODO: Add moons
+    let neptune_radius = scale(4_530_000_000. * RADIUS_SCALE);
     commands
         .spawn(PlanetBundle {
             planet: Planet,
@@ -176,9 +256,19 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(120. / 255., 192. / 255., 168. / 255.)),
                 ..Default::default()
             },
-            orbit: Orbit::circle(scale(4_530_000_000. * RADIUS_SCALE), 60_190.),
+            orbit: Orbit::circle(neptune_radius, 60_190.),
         })
         .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Neptune - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(neptune_radius - 5., neptune_radius + 5.))),
+            material: circle_color,
+            transform: Transform::from_xyz(0., 0., -2.),
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
 }
 
 fn scale(original: f32) -> f32 {
