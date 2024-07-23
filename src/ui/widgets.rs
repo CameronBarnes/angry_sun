@@ -1,8 +1,18 @@
 //! Helper traits for creating common widgets.
 
-use bevy::{ecs::system::EntityCommands, prelude::*, ui::Val::*};
+use bevy::{
+    ecs::system::EntityCommands,
+    prelude::*,
+    ui::Val::{Percent, Px},
+};
 
-use super::{interaction::InteractionPalette, palette::*};
+use super::{
+    interaction::InteractionPalette,
+    palette::{
+        BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, BUTTON_TEXT, HEADER_TEXT, LABEL_TEXT,
+        NODE_BACKGROUND,
+    },
+};
 
 /// An extension trait for spawning UI widgets.
 pub trait Widgets {

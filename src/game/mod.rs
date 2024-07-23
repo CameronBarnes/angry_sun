@@ -2,18 +2,18 @@
 
 use bevy::prelude::*;
 
-mod animation;
+//mod animation;
 pub mod assets;
 pub mod audio;
-mod movement;
+pub mod planets;
 pub mod spawn;
 
-pub(super) fn plugin(app: &mut App) {
+pub fn plugin(app: &mut App) {
     app.add_plugins((
-        animation::plugin,
+        //animation::plugin,
         audio::plugin,
         assets::plugin,
-        movement::plugin,
         spawn::plugin,
+        planets::plugin,
     ));
 }

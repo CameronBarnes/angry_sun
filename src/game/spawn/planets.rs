@@ -1,0 +1,225 @@
+use bevy::{
+    app::App,
+    asset::Assets,
+    color::{Color, Luminance},
+    core::Name,
+    prelude::{
+        Annulus, BuildChildren, Bundle, Circle, Commands, Component, Event, Mesh, ResMut,
+        StateScoped, Trigger,
+    },
+    sprite::{ColorMaterial, Material2d, MaterialMesh2dBundle, Mesh2dHandle},
+};
+
+use crate::screen::Screen;
+
+#[derive(Event, Debug)]
+pub struct SpawnSolarSystem;
+
+pub(super) fn plugin(app: &mut App) {
+    app.observe(spawn_solar_system);
+}
+
+#[derive(Component, Debug)]
+pub struct Orbit {
+    radius: f32,
+    eccentricity: f32,
+    degrees: f32,
+    period: f32,
+}
+
+impl Orbit {
+    pub const fn circle(radius: f32, period: f32) -> Self {
+        Self {
+            radius,
+            degrees: 0.,
+            eccentricity: 0.,
+            period,
+        }
+    }
+    pub const fn ellipse(radius: f32, eccentricity: f32, period: f32) -> Self {
+        Self {
+            radius,
+            eccentricity,
+            degrees: 0.,
+            period,
+        }
+    }
+
+    pub fn increment_orbit(&mut self, passed: f32) {
+        self.degrees += 360. * (passed / self.period);
+    }
+
+    pub fn to_x_y(&self) -> (f32, f32) {
+        if self.eccentricity > 0. {
+            unimplemented!()
+        } else {
+            (
+                self.radius * self.degrees.to_radians().cos(),
+                self.radius * self.degrees.to_radians().sin(),
+            )
+        }
+    }
+}
+
+#[derive(Bundle)]
+struct PlanetBundle<M: Material2d> {
+    name: Name,
+    mat_mesh: MaterialMesh2dBundle<M>,
+    orbit: Orbit,
+}
+
+// FIXME: Fix the too many lines issue by breaking this up
+#[allow(clippy::too_many_lines)]
+fn spawn_solar_system(
+    _trigger: Trigger<SpawnSolarSystem>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    static PLANET_SCALE: f32 = 10.;
+    static RADIUS_SCALE: f32 = 0.125;
+    static MOON_SCALE: f32 = 5.;
+    static MOON_RADIUS_SCALE: f32 = 1.5;
+
+    let circle_color = materials.add(Color::WHITE.darker(0.75));
+
+    commands
+        .spawn((
+            Name::new("Sun"),
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(1_400_000.)))),
+                material: materials.add(Color::srgb(253., 184., 19.)),
+                ..Default::default()
+            },
+        ))
+        .insert(StateScoped(Screen::Playing));
+
+    let mercury_radius = scale(57_000_000. * RADIUS_SCALE);
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Mercury"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(4_879. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(183., 184., 185.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(mercury_radius, 88.),
+        })
+        .insert(StateScoped(Screen::Playing));
+    commands.spawn((
+        Name::new("Mercury - Orbit Circle"),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Annulus::new(mercury_radius - 5., mercury_radius + 5.))),
+            material: circle_color,
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+    ));
+
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Venus"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(12_104. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(165., 124., 27.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(108_000_000. * RADIUS_SCALE), 224.7),
+        })
+        .insert(StateScoped(Screen::Playing));
+
+    let moon = commands
+        .spawn(PlanetBundle {
+            name: Name::new("Moon"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(3_475. * MOON_SCALE)))),
+                material: materials.add(Color::srgb(246., 241., 213.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(384_400. * MOON_RADIUS_SCALE), 27.3),
+        })
+        .insert(StateScoped(Screen::Playing))
+        .id();
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Earth"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(12_756. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(79., 76., 176.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(149_000_000. * RADIUS_SCALE), 365.25),
+        })
+        .insert(StateScoped(Screen::Playing))
+        .add_child(moon);
+
+    // TODO: Add moons
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Mars"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(6_790. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(240., 231., 231.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(288_000_000. * RADIUS_SCALE), 687.),
+        })
+        .insert(StateScoped(Screen::Playing));
+
+    // TODO: Add moons
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Jupiter"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(143_000. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(235., 243., 246.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(780_000_000. * RADIUS_SCALE), 4_330.6),
+        })
+        .insert(StateScoped(Screen::Playing));
+
+    // TODO: Add moons
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Saturn"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(120_536. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(206., 184., 184.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(1_437_000_000. * RADIUS_SCALE), 10_756.),
+        })
+        .insert(StateScoped(Screen::Playing));
+
+    // TODO: Add moons
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Uranus"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(51_118. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(172., 229., 238.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(2_871_000_000. * RADIUS_SCALE), 30_687.),
+        })
+        .insert(StateScoped(Screen::Playing));
+
+    // TODO: Add moons
+    commands
+        .spawn(PlanetBundle {
+            name: Name::new("Neptune"),
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(scale(49_528. * PLANET_SCALE)))),
+                material: materials.add(Color::srgb(120., 192., 168.)),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scale(4_530_000_000. * RADIUS_SCALE), 60_190.),
+        })
+        .insert(StateScoped(Screen::Playing));
+}
+
+fn scale(original: f32) -> f32 {
+    static FACTOR: f32 = 0.0005;
+    (original / 2.) * FACTOR
+}
