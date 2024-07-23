@@ -3,7 +3,7 @@ use bevy::{
     asset::Assets,
     color::{Color, Luminance},
     core::Name,
-    math::{Quat, Vec2, Vec3},
+    math::{Quat, Vec2, Vec3, Vec3Swizzles},
     prelude::{
         in_state, Bundle, Commands, Component, DespawnRecursiveExt, Entity, GlobalTransform,
         IntoSystemConfigs, Mesh, Query, Res, ResMut, StateScoped, Transform, Triangle2d, With,
@@ -98,6 +98,7 @@ fn create_moon_shadows(
                 scaled_distance * (sun_angle.abs() * -1.).cos(),
                 scaled_distance * (sun_angle.abs() * -1.).sin(),
             );
+            let angle_around_sun = translation.xy().to_angle() + sun_angle.abs() / 2.;
             commands.spawn((
                 PlanetShadow,
                 MaterialMesh2dBundle {
@@ -107,10 +108,8 @@ fn create_moon_shadows(
                         Vec2::new(second_point.0, second_point.1),
                     ))),
                     material: materials.add(Color::WHITE.darker(0.9)),
-                    transform: Transform::from_rotation(Quat::from_rotation_z(
-                        (translation.y / translation.x).atan() + sun_angle.abs() / 2.,
-                    ))
-                    .with_translation(Vec3::new(0., 0., -3.)),
+                    transform: Transform::from_rotation(Quat::from_rotation_z(angle_around_sun))
+                        .with_translation(Vec3::new(0., 0., -3.)),
                     ..Default::default()
                 },
                 StateScoped(Screen::Playing),
