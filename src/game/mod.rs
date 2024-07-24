@@ -8,6 +8,7 @@ pub mod audio;
 pub mod planets;
 pub mod sun;
 pub mod spawn;
+pub mod scale;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
@@ -17,5 +18,6 @@ pub fn plugin(app: &mut App) {
         spawn::plugin,
         planets::plugin,
         sun::plugin,
+        scale::plugin,
     ));
 }

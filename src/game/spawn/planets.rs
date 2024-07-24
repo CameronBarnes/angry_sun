@@ -8,7 +8,11 @@ use bevy::{
 };
 
 use crate::{
-    game::{planets::{Orbit, Planet, PlanetBundle}, sun::SpawnSun},
+    game::{
+        planets::{Orbit, Planet, PlanetBundle},
+        scale::ScaleWithZoom,
+        sun::SpawnSun,
+    },
     screen::Screen,
 };
 
@@ -37,7 +41,7 @@ fn spawn_solar_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let circle_color = materials.add(Color::WHITE.darker(0.75));
+    let circle_color = materials.add(Color::WHITE.darker(0.8));
     commands.trigger(SpawnSun);
 
     commands
@@ -55,6 +59,7 @@ fn spawn_solar_system(
                 material: materials.add(Color::srgb(253. / 255., 184. / 255., 19. / 255.)),
                 ..Default::default()
             },
+            ScaleWithZoom { ratio: 0.175 },
         ))
         .insert(StateScoped(Screen::Playing));
 
@@ -70,6 +75,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         false,
+        Some(2.),
     );
 
     spawn_planet(
@@ -84,6 +90,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         false,
+        None,
     );
 
     let moon = spawn_planet(
@@ -98,6 +105,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         true,
+        Some(0.5),
     );
     spawn_planet(
         &mut commands,
@@ -111,6 +119,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![moon.0, moon.1],
         false,
+        None,
     );
 
     spawn_planet(
@@ -125,6 +134,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         false,
+        None,
     );
 
     // TODO: Add moons
@@ -140,6 +150,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         false,
+        Some(0.5),
     );
 
     // TODO: Add moons
@@ -155,6 +166,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         false,
+        Some(0.5),
     );
 
     // TODO: Add moons
@@ -170,6 +182,7 @@ fn spawn_solar_system(
         circle_color.clone(),
         vec![],
         false,
+        None,
     );
 
     // TODO: Add moons
@@ -185,6 +198,7 @@ fn spawn_solar_system(
         circle_color,
         vec![],
         false,
+        None,
     );
 }
 
@@ -200,9 +214,10 @@ fn spawn_planet<A: Material2d>(
     orbit_circle: Handle<A>,
     children: Vec<Entity>,
     moon: bool,
+    zoom_scale: Option<f32>,
 ) -> (Entity, Entity) {
     let (border_width, triangle_id) = if moon {
-        (2., None)
+        (3., None)
     } else {
         let sun_angle = (scaled_size / scaled_radius).atan();
         let scaled_distance = scale(5_000_000_000. * RADIUS_SCALE);
@@ -231,7 +246,7 @@ fn spawn_planet<A: Material2d>(
             ))
             .id();
 
-        (5., Some(id))
+        (24., Some(id))
     };
 
     let orbit_id = commands
@@ -273,7 +288,12 @@ fn spawn_planet<A: Material2d>(
         },
         orbit: Orbit::circle(scaled_radius, orbital_period),
     });
-    planet.insert(StateScoped(Screen::Playing));
+    planet.insert((
+        StateScoped(Screen::Playing),
+        ScaleWithZoom {
+            ratio: zoom_scale.unwrap_or(1.),
+        },
+    ));
     for child in children {
         planet.add_child(child);
     }
