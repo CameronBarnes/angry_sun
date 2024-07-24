@@ -24,6 +24,9 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Debug)]
+pub struct PlanetShadowCone;
+
+#[derive(Component, Debug)]
 pub struct PlanetShadow;
 
 static MESH_RESOLUTION: usize = 100;
@@ -41,6 +44,7 @@ fn spawn_solar_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let shadow_color = materials.add(Color::BLACK.with_alpha(0.5));
     let circle_color = materials.add(Color::WHITE.darker(0.8));
     commands.trigger(SpawnSun);
 
@@ -73,6 +77,7 @@ fn spawn_solar_system(
         88.,
         Color::srgb(183. / 255., 184. / 255., 185. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         false,
         Some(2.),
@@ -88,6 +93,7 @@ fn spawn_solar_system(
         224.7,
         Color::srgb(165. / 255., 124. / 255., 27. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         false,
         None,
@@ -103,6 +109,7 @@ fn spawn_solar_system(
         27.3,
         Color::srgb(246. / 255., 241. / 255., 213. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         true,
         Some(0.5),
@@ -117,6 +124,7 @@ fn spawn_solar_system(
         365.25,
         Color::srgb(79. / 255., 76. / 255., 176. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![moon.0, moon.1],
         false,
         None,
@@ -132,6 +140,7 @@ fn spawn_solar_system(
         687.,
         Color::srgb(193. / 255., 68. / 255., 14. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         false,
         None,
@@ -148,6 +157,7 @@ fn spawn_solar_system(
         4_330.6,
         Color::srgb(148. / 255., 105. / 255., 86. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         false,
         Some(0.5),
@@ -164,6 +174,7 @@ fn spawn_solar_system(
         10_756.,
         Color::srgb(206. / 255., 184. / 255., 184. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         false,
         Some(0.5),
@@ -180,6 +191,7 @@ fn spawn_solar_system(
         30_687.,
         Color::srgb(172. / 255., 229. / 255., 238. / 255.),
         circle_color.clone(),
+        shadow_color.clone(),
         vec![],
         false,
         None,
@@ -196,6 +208,7 @@ fn spawn_solar_system(
         60_190.,
         Color::srgb(120. / 255., 192. / 255., 168. / 255.),
         circle_color,
+        shadow_color,
         vec![],
         false,
         None,
@@ -212,6 +225,7 @@ fn spawn_planet<A: Material2d>(
     orbital_period: f32,
     color: Color,
     orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
     children: Vec<Entity>,
     moon: bool,
     zoom_scale: Option<f32>,
@@ -231,7 +245,7 @@ fn spawn_planet<A: Material2d>(
         );
         let id = commands
             .spawn((
-                PlanetShadow,
+                PlanetShadowCone,
                 MaterialMesh2dBundle {
                     mesh: Mesh2dHandle(meshes.add(Triangle2d::new(
                         Vec2::splat(0.),
@@ -249,6 +263,7 @@ fn spawn_planet<A: Material2d>(
         (24., Some(id))
     };
 
+    // Spawn the orbit circle
     let orbit_id = commands
         .spawn((
             Name::new("Mercury - Orbit Circle"),
@@ -268,9 +283,28 @@ fn spawn_planet<A: Material2d>(
             StateScoped(Screen::Playing),
         ))
         .id();
+    // Spawn planet shadow
+    let shadow = commands
+        .spawn((
+            PlanetShadow,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(CircularSector::new(scaled_size, std::f32::consts::PI / 2.)),
+                ),
+                material: shadow_color,
+                transform: Transform::from_xyz(0., 0., 1.),
+                ..Default::default()
+            },
+        ))
+        //.insert(ScaleWithZoom {
+        //    ratio: zoom_scale.unwrap_or(1.),
+        //})
+        .id();
+    // Spawn the planet
     let mut planet = commands.spawn(PlanetBundle {
         planet: Planet {
-            shadow: triangle_id,
+            triangle: triangle_id,
+            shadow,
             size: scaled_size,
         },
         name,
@@ -288,12 +322,15 @@ fn spawn_planet<A: Material2d>(
         },
         orbit: Orbit::circle(scaled_radius, orbital_period),
     });
+    planet.add_child(shadow);
+    // Handle it being StateScoped and handle ScaleWithZoom
     planet.insert((
         StateScoped(Screen::Playing),
         ScaleWithZoom {
             ratio: zoom_scale.unwrap_or(1.),
         },
     ));
+    // Add supplied children, usually moons
     for child in children {
         planet.add_child(child);
     }

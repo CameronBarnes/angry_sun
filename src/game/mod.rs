@@ -6,9 +6,9 @@ use bevy::prelude::*;
 pub mod assets;
 pub mod audio;
 pub mod planets;
-pub mod sun;
-pub mod spawn;
 pub mod scale;
+pub mod spawn;
+pub mod sun;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((

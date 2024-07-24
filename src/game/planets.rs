@@ -15,7 +15,7 @@ use bevy::{
 
 use crate::screen::Screen;
 
-use super::spawn::planets::{scale, PlanetShadow, RADIUS_SCALE};
+use super::spawn::planets::{scale, PlanetShadow, PlanetShadowCone, RADIUS_SCALE};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -37,7 +37,8 @@ fn clear_transients(mut commands: Commands, query: Query<Entity, With<Transient>
 
 #[derive(Component, Debug)]
 pub struct Planet {
-    pub shadow: Option<Entity>,
+    pub triangle: Option<Entity>,
+    pub shadow: Entity,
     pub size: f32,
 }
 
@@ -84,9 +85,10 @@ fn create_moon_shadows(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     planet_query: Query<(&GlobalTransform, &Planet), With<Orbit>>,
+    mut shadow_query: Query<&mut Transform, With<PlanetShadow>>,
 ) {
     for (transform, planet) in &planet_query {
-        if planet.shadow.is_none() {
+        if planet.triangle.is_none() {
             let translation = transform.translation();
             let sun_angle = (planet.size / translation.x.hypot(translation.y).abs()).atan();
             let scaled_distance = scale(5_000_000_000. * RADIUS_SCALE);
@@ -99,8 +101,12 @@ fn create_moon_shadows(
                 scaled_distance * (sun_angle.abs() * -1.).sin(),
             );
             let angle_around_sun = translation.xy().to_angle() + sun_angle.abs() / 2.;
+            if let Ok(mut shadow) = shadow_query.get_mut(planet.shadow) {
+                shadow.rotation =
+                    Quat::from_rotation_z(angle_around_sun - std::f32::consts::PI / 2.);
+            }
             commands.spawn((
-                PlanetShadow,
+                PlanetShadowCone,
                 MaterialMesh2dBundle {
                     mesh: Mesh2dHandle(meshes.add(Triangle2d::new(
                         Vec2::splat(0.),
@@ -131,6 +137,14 @@ fn move_planets(
     time: Res<Time>,
     mut planet_query: Query<(&mut Transform, &mut Orbit, &Planet), With<Orbit>>,
     mut shadow_query: Query<&mut Transform, (With<PlanetShadow>, Without<Orbit>)>,
+    mut triangle_query: Query<
+        &mut Transform,
+        (
+            With<PlanetShadowCone>,
+            Without<Orbit>,
+            Without<PlanetShadow>,
+        ),
+    >,
 ) {
     if planet_query.is_empty() {
         return;
@@ -142,9 +156,13 @@ fn move_planets(
         transform.translation.x = x;
         transform.translation.y = y;
 
-        if let Some(id) = planet.shadow {
-            if let Ok(mut triangle) = shadow_query.get_mut(id) {
-                triangle.rotation = Quat::from_rotation_z(orbit.angle().to_radians());
+        if let Some(id) = planet.triangle {
+            let angle = orbit.angle().to_radians();
+            if let Ok(mut triangle) = triangle_query.get_mut(id) {
+                triangle.rotation = Quat::from_rotation_z(angle);
+            }
+            if let Ok(mut shadow) = shadow_query.get_mut(planet.shadow) {
+                shadow.rotation = Quat::from_rotation_z(angle - std::f32::consts::PI / 2.);
             }
         }
     }

@@ -94,7 +94,6 @@ fn update_sun(
 ) {
     if let Ok(mut sun) = query.get_single_mut() {
         sun.increment(time.delta_seconds());
-        if let Some((power, size)) = sun.flare() {
-        }
+        if let Some((power, size)) = sun.flare() {}
     }
 }
