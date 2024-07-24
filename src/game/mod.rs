@@ -6,6 +6,7 @@ use bevy::prelude::*;
 pub mod assets;
 pub mod audio;
 pub mod planets;
+pub mod sun;
 pub mod spawn;
 
 pub fn plugin(app: &mut App) {
@@ -15,5 +16,6 @@ pub fn plugin(app: &mut App) {
         assets::plugin,
         spawn::plugin,
         planets::plugin,
+        sun::plugin,
     ));
 }

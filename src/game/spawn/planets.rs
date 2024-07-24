@@ -8,7 +8,7 @@ use bevy::{
 };
 
 use crate::{
-    game::planets::{Orbit, Planet, PlanetBundle},
+    game::{planets::{Orbit, Planet, PlanetBundle}, sun::SpawnSun},
     screen::Screen,
 };
 
@@ -38,6 +38,7 @@ fn spawn_solar_system(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let circle_color = materials.add(Color::WHITE.darker(0.75));
+    commands.trigger(SpawnSun);
 
     commands
         .spawn((
