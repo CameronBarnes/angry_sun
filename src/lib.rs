@@ -7,6 +7,7 @@ mod ui;
 use bevy::{
     asset::AssetMetaCheck,
     audio::{AudioPlugin, Volume},
+    core_pipeline::bloom::BloomSettings,
     prelude::*,
 };
 use bevy_pancam::{PanCam, PanCamPlugin};
@@ -79,17 +80,24 @@ enum AppSet {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands
-        .spawn((
-            Name::new("Camera"),
-            Camera2dBundle::default(),
-            // Render all UI to this camera.
-            // Not strictly necessary since we only use one camera,
-            // but if we don't use this component, our UI will disappear as soon
-            // as we add another camera. This includes indirect ways of adding cameras like using
-            // [ui node outlines](https://bevyengine.org/news/bevy-0-14/#ui-node-outline-gizmos)
-            // for debugging. So it's good to have this here for future-proofing.
-            IsDefaultUiCamera,
-        ))
-        .insert(PanCam::default());
+    commands.spawn((
+        Name::new("Camera"),
+        Camera2dBundle {
+            camera: Camera {
+                hdr: true,
+                ..Default::default()
+            },
+            tonemapping: bevy::core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
+            ..Default::default()
+        },
+        // Render all UI to this camera.
+        // Not strictly necessary since we only use one camera,
+        // but if we don't use this component, our UI will disappear as soon
+        // as we add another camera. This includes indirect ways of adding cameras like using
+        // [ui node outlines](https://bevyengine.org/news/bevy-0-14/#ui-node-outline-gizmos)
+        // for debugging. So it's good to have this here for future-proofing.
+        IsDefaultUiCamera,
+        PanCam::default(),
+        BloomSettings::default(),
+    ));
 }

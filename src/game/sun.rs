@@ -5,6 +5,8 @@ use rand::{thread_rng, Rng};
 
 use crate::screen::Screen;
 
+use super::flare::SpawnFlare;
+
 #[derive(Event, Debug)]
 pub struct SpawnSun;
 
@@ -89,11 +91,11 @@ fn update_sun(
     time: Res<Time>,
     mut query: Query<&mut Sun, With<Sun>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if let Ok(mut sun) = query.get_single_mut() {
         sun.increment(time.delta_seconds());
-        if let Some((power, size)) = sun.flare() {}
+        if let Some((power, size)) = sun.flare() {
+            commands.trigger(SpawnFlare{ power, size });
+        }
     }
 }

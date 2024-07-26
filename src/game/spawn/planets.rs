@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use bevy::{
     app::App,
     asset::{Assets, Handle},
@@ -24,17 +26,17 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Debug)]
-pub struct PlanetShadowCone;
-
-#[derive(Component, Debug)]
 pub struct PlanetShadow;
 
 static MESH_RESOLUTION: usize = 100;
 
-static PLANET_SCALE: f32 = 10.;
-pub static RADIUS_SCALE: f32 = 0.125;
+static PLANET_SCALE: f32 = 12.;
+pub static RADIUS_SCALE: f32 = 0.1;
 static MOON_SCALE: f32 = 5.;
 static MOON_RADIUS_SCALE: f32 = 1.5;
+
+pub static LAST_PLANET_DISTANCE: LazyLock<f32> =
+    LazyLock::new(|| scale(4_530_000_000. * RADIUS_SCALE * 0.7));
 
 // FIXME: Fix the too many lines issue by breaking this up
 #[allow(clippy::too_many_lines)]
@@ -60,10 +62,14 @@ fn spawn_solar_system(
                             .build(),
                     ),
                 ),
-                material: materials.add(Color::srgb(253. / 255., 184. / 255., 19. / 255.)),
+                material: materials.add(Color::srgb(
+                    (253. / 255.) * 10.,
+                    (184. / 255.) * 10.,
+                    (19. / 255.) * 10.,
+                )),
                 ..Default::default()
             },
-            ScaleWithZoom { ratio: 0.175 },
+            ScaleWithZoom { ratio: 0.1 },
         ))
         .insert(StateScoped(Screen::Playing));
 
@@ -72,7 +78,8 @@ fn spawn_solar_system(
         &mut meshes,
         &mut materials,
         Name::new("Mercury"),
-        scale(57_000_000. * RADIUS_SCALE),
+        scale(57_000_000. * RADIUS_SCALE * 1.2), // We've adjusted mercury specifically because
+        // it's so close to the sun
         scale(4_879. * PLANET_SCALE),
         88.,
         Color::srgb(183. / 255., 184. / 255., 185. / 255.),
@@ -152,15 +159,15 @@ fn spawn_solar_system(
         &mut meshes,
         &mut materials,
         Name::new("Jupiter"),
-        scale(780_000_000. * RADIUS_SCALE),
+        scale(780_000_000. * RADIUS_SCALE * 0.8),
         scale(143_000. * PLANET_SCALE),
-        4_330.6,
+        4_330.6 * 0.8,
         Color::srgb(148. / 255., 105. / 255., 86. / 255.),
         circle_color.clone(),
         shadow_color.clone(),
         vec![],
         false,
-        Some(0.5),
+        Some(0.4),
     );
 
     // TODO: Add moons
@@ -169,15 +176,15 @@ fn spawn_solar_system(
         &mut meshes,
         &mut materials,
         Name::new("Saturn"),
-        scale(1_437_000_000. * RADIUS_SCALE),
+        scale(1_437_000_000. * RADIUS_SCALE * 0.8),
         scale(120_536. * PLANET_SCALE),
-        10_756.,
+        10_756. * 0.8,
         Color::srgb(206. / 255., 184. / 255., 184. / 255.),
         circle_color.clone(),
         shadow_color.clone(),
         vec![],
         false,
-        Some(0.5),
+        Some(0.4),
     );
 
     // TODO: Add moons
@@ -186,15 +193,15 @@ fn spawn_solar_system(
         &mut meshes,
         &mut materials,
         Name::new("Uranus"),
-        scale(2_871_000_000. * RADIUS_SCALE),
+        scale(2_871_000_000. * RADIUS_SCALE * 0.7),
         scale(51_118. * PLANET_SCALE),
-        30_687.,
+        30_687. * 0.7,
         Color::srgb(172. / 255., 229. / 255., 238. / 255.),
         circle_color.clone(),
         shadow_color.clone(),
         vec![],
         false,
-        None,
+        Some(0.8),
     );
 
     // TODO: Add moons
@@ -203,15 +210,15 @@ fn spawn_solar_system(
         &mut meshes,
         &mut materials,
         Name::new("Neptune"),
-        scale(4_530_000_000. * RADIUS_SCALE),
+        *LAST_PLANET_DISTANCE,
         scale(49_528. * PLANET_SCALE),
-        60_190.,
+        60_190. * 0.7,
         Color::srgb(120. / 255., 192. / 255., 168. / 255.),
         circle_color,
         shadow_color,
         vec![],
         false,
-        None,
+        Some(0.8),
     );
 }
 
@@ -230,38 +237,7 @@ fn spawn_planet<A: Material2d>(
     moon: bool,
     zoom_scale: Option<f32>,
 ) -> (Entity, Entity) {
-    let (border_width, triangle_id) = if moon {
-        (3., None)
-    } else {
-        let sun_angle = (scaled_size / scaled_radius).atan();
-        let scaled_distance = scale(5_000_000_000. * RADIUS_SCALE);
-        let first_point = (
-            scaled_distance * sun_angle.abs().cos(),
-            scaled_distance * sun_angle.abs().sin(),
-        );
-        let second_point = (
-            scaled_distance * (sun_angle.abs() * -1.).cos(),
-            scaled_distance * (sun_angle.abs() * -1.).sin(),
-        );
-        let id = commands
-            .spawn((
-                PlanetShadowCone,
-                MaterialMesh2dBundle {
-                    mesh: Mesh2dHandle(meshes.add(Triangle2d::new(
-                        Vec2::splat(0.),
-                        Vec2::new(first_point.0, first_point.1),
-                        Vec2::new(second_point.0, second_point.1),
-                    ))),
-                    material: orbit_circle.clone(),
-                    transform: Transform::from_xyz(0., 0., -3.),
-                    ..Default::default()
-                },
-                StateScoped(Screen::Playing),
-            ))
-            .id();
-
-        (24., Some(id))
-    };
+    let border_width = if moon { 3. } else { 24. };
 
     // Spawn the orbit circle
     let orbit_id = commands
@@ -303,9 +279,10 @@ fn spawn_planet<A: Material2d>(
     // Spawn the planet
     let mut planet = commands.spawn(PlanetBundle {
         planet: Planet {
-            triangle: triangle_id,
+            is_moon: moon,
             shadow,
             size: scaled_size,
+            absorbed_power: 0.,
         },
         name,
         mat_mesh: MaterialMesh2dBundle {

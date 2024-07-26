@@ -24,10 +24,10 @@ fn scale_with_zoom(
     mut scaled_objects: Query<(&mut Transform, &ScaleWithZoom), With<ScaleWithZoom>>,
 ) {
     if let Ok(projection) = camera_projection.get_single() {
-        if projection.scale > 10. {
+        if projection.scale > 15. {
             for (mut transform, scale) in &mut scaled_objects {
                 transform.scale =
-                    Vec3::splat((projection.scale / 20.).mul(scale.ratio).clamp(1., 5.));
+                    Vec3::splat((projection.scale / 30.).mul(scale.ratio).clamp(1., 5.));
             }
         } else {
             for (mut transform, _scale) in &mut scaled_objects {

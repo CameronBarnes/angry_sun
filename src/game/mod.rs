@@ -9,6 +9,8 @@ pub mod planets;
 pub mod scale;
 pub mod spawn;
 pub mod sun;
+pub mod flare;
+pub mod decay;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
@@ -19,5 +21,7 @@ pub fn plugin(app: &mut App) {
         planets::plugin,
         sun::plugin,
         scale::plugin,
+        flare::plugin,
+        decay::plugin,
     ));
 }
