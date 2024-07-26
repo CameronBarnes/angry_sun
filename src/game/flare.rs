@@ -30,30 +30,39 @@ pub struct FlareBundle<M: Material2d> {
     decay: Decay,
 }
 
+#[derive(Resource)]
+struct FlareResources(Handle<Mesh>, Handle<ColorMaterial>);
+
 pub(super) fn plugin(app: &mut App) {
+    app.add_systems(Startup, build_flare_mesh);
     app.observe(spawn_flare);
     app.add_systems(Update, update_flares);
 }
 
-fn spawn_flare(
-    trigger: Trigger<SpawnFlare>,
+fn build_flare_mesh(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    static NUMBER_OF_FLARES: usize = 3_000;
-    static FLARE_SPEED: f32 = 1_000.;
-    static NORMAL_WIDTH: f32 = 0.5;
-
-    info! {"Spawing flare"};
-    // Pick an angle
-    let primary_angle = f32::from(thread_rng().gen_range(0..359_u16));
-    let width = trigger.event().size * NORMAL_WIDTH;
-
     let mesh = meshes.add(Circle::new(50.));
     let color = materials.add(
         Color::srgb((253. / 255.) * 20., (184. / 255.) * 20., (19. / 255.) * 20.).with_alpha(0.4),
     );
+    commands.insert_resource(FlareResources(mesh, color));
+}
+
+fn spawn_flare(
+    trigger: Trigger<SpawnFlare>,
+    resources: Res<FlareResources>,
+    mut commands: Commands,
+) {
+    static NUMBER_OF_FLARES: usize = 5_000;
+    static FLARE_SPEED: f32 = 2_000.;
+    static NORMAL_WIDTH: f32 = 0.5;
+
+    // Pick an angle
+    let primary_angle = f32::from(thread_rng().gen_range(0..359_u16));
+    let width = trigger.event().size * NORMAL_WIDTH;
 
     for _ in 0..NUMBER_OF_FLARES {
         let angle = width
@@ -70,8 +79,8 @@ fn spawn_flare(
             FlareBundle {
                 flare: Flare(trigger.event().power),
                 mat_mesh: MaterialMesh2dBundle {
-                    mesh: bevy::sprite::Mesh2dHandle(mesh.clone()),
-                    material: color.clone(),
+                    mesh: bevy::sprite::Mesh2dHandle(resources.0.clone()),
+                    material: resources.1.clone(),
                     transform: Transform::from_xyz(0., 0., 2.),
                     ..Default::default()
                 },
@@ -106,26 +115,25 @@ fn update_flares(
                 .xy()
                 .distance(planet_transform.translation().xy());
             // Handle collision with the planet
-            if distance < planet.size {
-                planet.absorbed_power += flare.0;
-                if let Some(entity_commands) = commands.get_entity(entity) {
-                    entity_commands.despawn_recursive();
-                }
-                continue;
-            } else if distance < planet.size * 3. {
+            if distance < planet.size * 2. {
                 let direction = planet_transform
                     .translation()
                     .xy()
                     .sub(transform.translation.xy())
                     .normalize();
-                if distance < planet.size * 1.1 {
+                if distance < planet.size {
+                    planet.absorbed_power += flare.0;
+                    if let Some(entity_commands) = commands.get_entity(entity) {
+                        entity_commands.despawn_recursive();
+                    }
+                    continue;
+                } else if distance < planet.size * 1.1 {
                     velocity.0 = velocity
                         .0
                         .lerp(direction.mul(velocity.0.length() * 1.1), 0.2);
                     continue;
                 }
                 let force = (planet.size * 30.) / distance.sub(planet.size).div(20.).powi(2);
-                info! {"Gravity: {force}"};
                 velocity.0 += direction.mul(force);
             }
             transform.translation += velocity.0.extend(0.).mul(time.delta_seconds());
