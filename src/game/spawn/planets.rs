@@ -13,7 +13,7 @@ use bevy_mod_picking::PickableBundle;
 use crate::{
     game::{
         camera::{FinishZoom, ScaleWithZoom},
-        highlight::{HasHighlightObject, HighlightObject},
+        highlight::{HasHighlightObject, HighlightObject, LinkSelectObject},
         planets::{Orbit, Planet, PlanetBundle},
         sun::SpawnSun,
     },
@@ -29,6 +29,9 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component, Debug)]
 pub struct PlanetShadow;
+
+#[derive(Component, Debug)]
+pub struct OrbitRing;
 
 static MESH_RESOLUTION: usize = 100;
 
@@ -240,32 +243,11 @@ fn spawn_planet<A: Material2d>(
     moon: bool,
     zoom_scale: Option<f32>,
 ) -> (Entity, Entity) {
-    let border_width = if moon { 3. } else { 24. };
-
-    // Spawn the orbit circle
-    let orbit_id = commands
-        .spawn((
-            Name::new("Mercury - Orbit Circle"),
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(
-                        Annulus::new(scaled_radius - border_width, scaled_radius + border_width)
-                            .mesh()
-                            .resolution(MESH_RESOLUTION)
-                            .build(),
-                    ),
-                ),
-                material: orbit_circle,
-                transform: Transform::from_xyz(0., 0., -2.),
-                ..Default::default()
-            },
-            StateScoped(Screen::Playing),
-        ))
-        .id();
     // Spawn planet shadow
     let shadow = commands
         .spawn((
             PlanetShadow,
+            StateScoped(Screen::Playing),
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(
                     meshes.add(CircularSector::new(scaled_size, std::f32::consts::PI / 2.)),
@@ -284,6 +266,7 @@ fn spawn_planet<A: Material2d>(
     let highlight = commands
         .spawn((
             HighlightObject,
+            StateScoped(Screen::Playing),
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(
                     meshes.add(
@@ -340,7 +323,34 @@ fn spawn_planet<A: Material2d>(
     for child in children {
         planet.add_child(child);
     }
-    (planet.id(), orbit_id)
+
+    let planet = planet.id();
+    let border_width = if moon { 6. } else { 60. };
+
+    // Spawn the orbit circle
+    let orbit_id = commands
+        .spawn((
+            OrbitRing,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Annulus::new(scaled_radius - border_width, scaled_radius + border_width)
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
+                material: orbit_circle,
+                transform: Transform::from_xyz(0., 0., -2.),
+                ..Default::default()
+            },
+            StateScoped(Screen::Playing),
+            LinkSelectObject(planet),
+            PickableBundle::default(),
+        ))
+        .id();
+
+    (planet, orbit_id)
 }
 
 pub fn scale(original: f32) -> f32 {

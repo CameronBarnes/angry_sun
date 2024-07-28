@@ -45,8 +45,14 @@ fn scale_with_zoom(
 }
 
 fn camera_follow(
-    mut query_selectables: Query<(&GlobalTransform, &PickSelection, &mut FinishZoom), With<PickSelection>>,
-    mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), (With<Camera>, Without<PickSelection>)>,
+    mut query_selectables: Query<
+        (&GlobalTransform, &PickSelection, &mut FinishZoom),
+        With<PickSelection>,
+    >,
+    mut camera_query: Query<
+        (&mut Transform, &mut OrthographicProjection),
+        (With<Camera>, Without<PickSelection>),
+    >,
 ) {
     for (transform, selected, mut finish_zoom) in &mut query_selectables {
         if selected.is_selected {

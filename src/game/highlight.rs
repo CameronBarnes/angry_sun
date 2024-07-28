@@ -1,8 +1,13 @@
 use bevy::prelude::*;
 use bevy_mod_picking::prelude::PickSelection;
 
+use super::{planets::Planet, spawn::planets::OrbitRing};
+
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, handle_highlighting);
+    app.add_systems(
+        Update,
+        (handle_orbit_line_selection, handle_highlighting).chain(),
+    );
 }
 
 #[derive(Component, Debug)]
@@ -10,6 +15,25 @@ pub struct HighlightObject;
 
 #[derive(Component, Debug)]
 pub struct HasHighlightObject(pub Entity);
+
+#[derive(Component, Debug)]
+pub struct LinkSelectObject(pub Entity);
+
+fn handle_orbit_line_selection(
+    mut ring_query: Query<(&LinkSelectObject, &mut PickSelection), With<OrbitRing>>,
+    mut planet_query: Query<&mut PickSelection, (With<Planet>, Without<OrbitRing>)>,
+) {
+    for (link, mut selected) in &mut ring_query {
+        if selected.is_selected {
+            if let Ok(mut planet) = planet_query.get_mut(link.0) {
+                planet.is_selected = true;
+                planet.set_changed();
+                selected.is_selected = false;
+                selected.set_changed();
+            }
+        }
+    }
+}
 
 fn handle_highlighting(
     mut highlight_query: Query<&mut Visibility, With<HighlightObject>>,
