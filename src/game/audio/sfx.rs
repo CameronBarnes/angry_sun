@@ -11,15 +11,16 @@ fn play_sfx(
     mut commands: Commands,
     sfx_handles: Res<HandleMap<SfxKey>>,
 ) {
-    let (sfx_key, volume) = match trigger.event() {
-        PlaySfx::Key(key) => (*key, 1.0),
-        PlaySfx::KeyVol(key, volume) => (*key, *volume),
+    let (sfx_key, volume, speed) = match trigger.event() {
+        PlaySfx::Key(key) => (*key, 1.0, 1.0),
+        PlaySfx::KeyVolSpeed(key, volume, speed) => (*key, *volume, *speed),
     };
     commands.spawn(AudioSourceBundle {
         source: sfx_handles[&sfx_key].clone_weak(),
         settings: PlaybackSettings {
             mode: PlaybackMode::Despawn,
             volume: Volume::new(volume),
+            speed,
             ..default()
         },
     });
@@ -29,5 +30,5 @@ fn play_sfx(
 #[derive(Event)]
 pub enum PlaySfx {
     Key(SfxKey),
-    KeyVol(SfxKey, f32),
+    KeyVolSpeed(SfxKey, f32, f32),
 }

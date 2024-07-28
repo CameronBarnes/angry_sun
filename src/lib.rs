@@ -10,6 +10,7 @@ use bevy::{
     core_pipeline::bloom::BloomSettings,
     prelude::*,
 };
+use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_pancam::{PanCam, PanCamPlugin};
 
 pub struct AppPlugin;
@@ -56,6 +57,9 @@ impl Plugin for AppPlugin {
 
         // Add camera plugin
         app.add_plugins(PanCamPlugin);
+
+        //Picking
+        app.add_plugins(DefaultPickingPlugins);
 
         // Add other plugins.
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));

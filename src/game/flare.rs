@@ -6,7 +6,10 @@ use bevy::{
 };
 use rand::{thread_rng, Rng};
 
-use crate::{game::{assets::SfxKey, audio::sfx::PlaySfx, scale::ScaleWithZoom}, screen::Screen};
+use crate::{
+    game::{assets::SfxKey, audio::sfx::PlaySfx, scale::ScaleWithZoom},
+    screen::Screen,
+};
 
 use super::{decay::Decay, planets::Planet, spawn::planets::LAST_PLANET_DISTANCE};
 
@@ -95,7 +98,17 @@ fn spawn_flare(
         ));
     }
 
-    commands.trigger(PlaySfx::KeyVol(SfxKey::Thunder, 0.15 * trigger.event().power));
+    let mut speed_mod = f32::from(thread_rng().gen_range(0..100_u8))
+        .div(100.);
+    if thread_rng().gen_bool(0.7) {
+        speed_mod *= -1.;
+    }
+    let speed = speed_mod.mul_add(0.5, 1.0);
+    commands.trigger(PlaySfx::KeyVolSpeed(
+        SfxKey::Thunder,
+        0.15 * trigger.event().power,
+        speed,
+    ));
 }
 
 fn update_flares(

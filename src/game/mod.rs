@@ -11,6 +11,7 @@ pub mod spawn;
 pub mod sun;
 pub mod flare;
 pub mod decay;
+pub mod highlight;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
@@ -23,5 +24,6 @@ pub fn plugin(app: &mut App) {
         scale::plugin,
         flare::plugin,
         decay::plugin,
+        highlight::plugin,
     ));
 }

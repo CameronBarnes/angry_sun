@@ -8,9 +8,13 @@ use bevy::{
     prelude::*,
     sprite::{ColorMaterial, Material2d, MaterialMesh2dBundle, Mesh2dHandle},
 };
+use bevy_mod_picking::
+    PickableBundle
+;
 
 use crate::{
     game::{
+        highlight::{HasHighlightObject, HighlightObject},
         planets::{Orbit, Planet, PlanetBundle},
         scale::ScaleWithZoom,
         sun::SpawnSun,
@@ -70,6 +74,7 @@ fn spawn_solar_system(
                 ..Default::default()
             },
             ScaleWithZoom { ratio: 0.1 },
+            PickableBundle::default(),
         ))
         .insert(StateScoped(Screen::Playing));
 
@@ -87,7 +92,7 @@ fn spawn_solar_system(
         shadow_color.clone(),
         vec![],
         false,
-        Some(2.),
+        Some(2.5),
     );
 
     spawn_planet(
@@ -167,7 +172,7 @@ fn spawn_solar_system(
         shadow_color.clone(),
         vec![],
         false,
-        Some(0.4),
+        Some(0.3),
     );
 
     // TODO: Add moons
@@ -184,7 +189,7 @@ fn spawn_solar_system(
         shadow_color.clone(),
         vec![],
         false,
-        Some(0.4),
+        Some(0.3),
     );
 
     // TODO: Add moons
@@ -201,7 +206,7 @@ fn spawn_solar_system(
         shadow_color.clone(),
         vec![],
         false,
-        Some(0.8),
+        Some(0.6),
     );
 
     // TODO: Add moons
@@ -218,7 +223,7 @@ fn spawn_solar_system(
         shadow_color,
         vec![],
         false,
-        Some(0.8),
+        Some(0.6),
     );
 }
 
@@ -276,6 +281,28 @@ fn spawn_planet<A: Material2d>(
         //    ratio: zoom_scale.unwrap_or(1.),
         //})
         .id();
+
+    // Spawn the highlight circle
+    let highlight = commands
+        .spawn((
+            HighlightObject,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scaled_size * 1.4)
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
+                material: materials.add(Color::WHITE),
+                visibility: Visibility::Hidden,
+                transform: Transform::from_xyz(0., 0., -3.),
+                ..Default::default()
+            },
+        ))
+        .id();
+
     // Spawn the planet
     let mut planet = commands.spawn(PlanetBundle {
         planet: Planet {
@@ -300,12 +327,15 @@ fn spawn_planet<A: Material2d>(
         orbit: Orbit::circle(scaled_radius, orbital_period),
     });
     planet.add_child(shadow);
+    planet.add_child(highlight);
     // Handle it being StateScoped and handle ScaleWithZoom
     planet.insert((
         StateScoped(Screen::Playing),
         ScaleWithZoom {
             ratio: zoom_scale.unwrap_or(1.),
         },
+        PickableBundle::default(),
+        HasHighlightObject(highlight),
     ));
     // Add supplied children, usually moons
     for child in children {
