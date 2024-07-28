@@ -6,7 +6,7 @@ use bevy::{
 };
 use rand::{thread_rng, Rng};
 
-use crate::{game::scale::ScaleWithZoom, screen::Screen};
+use crate::{game::{assets::SfxKey, audio::sfx::PlaySfx, scale::ScaleWithZoom}, screen::Screen};
 
 use super::{decay::Decay, planets::Planet, spawn::planets::LAST_PLANET_DISTANCE};
 
@@ -94,6 +94,8 @@ fn spawn_flare(
             ScaleWithZoom { ratio: 0.1 },
         ));
     }
+
+    commands.trigger(PlaySfx::KeyVol(SfxKey::Thunder, 0.15 * trigger.event().power));
 }
 
 fn update_flares(

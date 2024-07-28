@@ -29,6 +29,7 @@ impl FromWorld for HandleMap<ImageKey> {
 pub enum SfxKey {
     ButtonHover,
     ButtonPress,
+    Thunder,
 }
 
 impl AssetKey for SfxKey {
@@ -47,6 +48,10 @@ impl FromWorld for HandleMap<SfxKey> {
                 SfxKey::ButtonPress,
                 asset_server.load("audio/sfx/button_press.ogg"),
             ),
+            (
+                SfxKey::Thunder,
+                asset_server.load("audio/sfx/emulius_thunder-01.ogg"),
+             ),
         ]
         .into()
     }
@@ -72,7 +77,7 @@ impl FromWorld for HandleMap<SoundtrackKey> {
             ),
             (
                 SoundtrackKey::Gameplay,
-                asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
+                asset_server.load("audio/soundtracks/Kevin MacLeod - Clean Soul.mp3"),
             ),
         ]
         .into()
