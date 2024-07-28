@@ -87,15 +87,11 @@ fn setup_sun(_trigger: Trigger<SpawnSun>, mut commands: Commands) {
     ));
 }
 
-fn update_sun(
-    time: Res<Time>,
-    mut query: Query<&mut Sun, With<Sun>>,
-    mut commands: Commands,
-) {
+fn update_sun(time: Res<Time>, mut query: Query<&mut Sun, With<Sun>>, mut commands: Commands) {
     if let Ok(mut sun) = query.get_single_mut() {
         sun.increment(time.delta_seconds());
         if let Some((power, size)) = sun.flare() {
-            commands.trigger(SpawnFlare{ power, size });
+            commands.trigger(SpawnFlare { power, size });
         }
     }
 }

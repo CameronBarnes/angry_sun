@@ -8,15 +8,13 @@ use bevy::{
     prelude::*,
     sprite::{ColorMaterial, Material2d, MaterialMesh2dBundle, Mesh2dHandle},
 };
-use bevy_mod_picking::
-    PickableBundle
-;
+use bevy_mod_picking::PickableBundle;
 
 use crate::{
     game::{
+        camera::{FinishZoom, ScaleWithZoom},
         highlight::{HasHighlightObject, HighlightObject},
         planets::{Orbit, Planet, PlanetBundle},
-        scale::ScaleWithZoom,
         sun::SpawnSun,
     },
     screen::Screen,
@@ -36,7 +34,7 @@ static MESH_RESOLUTION: usize = 100;
 
 static PLANET_SCALE: f32 = 12.;
 pub static RADIUS_SCALE: f32 = 0.1;
-static MOON_SCALE: f32 = 5.;
+static MOON_SCALE: f32 = 7.;
 static MOON_RADIUS_SCALE: f32 = 1.5;
 
 pub static LAST_PLANET_DISTANCE: LazyLock<f32> =
@@ -336,6 +334,7 @@ fn spawn_planet<A: Material2d>(
         },
         PickableBundle::default(),
         HasHighlightObject(highlight),
+        FinishZoom::default(),
     ));
     // Add supplied children, usually moons
     for child in children {

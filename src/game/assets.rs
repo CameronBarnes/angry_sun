@@ -51,7 +51,7 @@ impl FromWorld for HandleMap<SfxKey> {
             (
                 SfxKey::Thunder,
                 asset_server.load("audio/sfx/emulius_thunder-01.ogg"),
-             ),
+            ),
         ]
         .into()
     }

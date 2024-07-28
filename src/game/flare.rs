@@ -7,7 +7,7 @@ use bevy::{
 use rand::{thread_rng, Rng};
 
 use crate::{
-    game::{assets::SfxKey, audio::sfx::PlaySfx, scale::ScaleWithZoom},
+    game::{assets::SfxKey, audio::sfx::PlaySfx, camera::ScaleWithZoom},
     screen::Screen,
 };
 
@@ -98,8 +98,7 @@ fn spawn_flare(
         ));
     }
 
-    let mut speed_mod = f32::from(thread_rng().gen_range(0..100_u8))
-        .div(100.);
+    let mut speed_mod = f32::from(thread_rng().gen_range(0..100_u8)).div(100.);
     if thread_rng().gen_bool(0.7) {
         speed_mod *= -1.;
     }
@@ -148,8 +147,8 @@ fn update_flares(
                         .lerp(direction.mul(velocity.0.length() * 1.1), 0.2);
                     continue;
                 }
-                let force = (planet.size * 30.) / distance.sub(planet.size).div(20.).powi(2);
-                velocity.0 += direction.mul(force);
+                let force = (planet.size * 50.) / distance.sub(planet.size).div(30.).powi(2);
+                velocity.0 += direction.mul(force).mul(time.delta_seconds());
             }
             transform.translation += velocity.0.extend(0.).mul(time.delta_seconds());
         }

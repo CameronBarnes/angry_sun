@@ -5,13 +5,13 @@ use bevy::prelude::*;
 //mod animation;
 pub mod assets;
 pub mod audio;
+pub mod camera;
+pub mod decay;
+pub mod flare;
+pub mod highlight;
 pub mod planets;
-pub mod scale;
 pub mod spawn;
 pub mod sun;
-pub mod flare;
-pub mod decay;
-pub mod highlight;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
@@ -21,7 +21,7 @@ pub fn plugin(app: &mut App) {
         spawn::plugin,
         planets::plugin,
         sun::plugin,
-        scale::plugin,
+        camera::plugin,
         flare::plugin,
         decay::plugin,
         highlight::plugin,
