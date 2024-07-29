@@ -5,6 +5,8 @@
 
 pub mod interaction;
 pub mod palette;
+pub mod planet_ui;
+pub mod resource_ui;
 mod widgets;
 
 pub mod prelude {
@@ -18,5 +20,5 @@ pub mod prelude {
 use bevy::prelude::*;
 
 pub fn plugin(app: &mut App) {
-    app.add_plugins(interaction::plugin);
+    app.add_plugins((interaction::plugin, planet_ui::plugin));
 }

@@ -1,4 +1,7 @@
-use std::ops::{Div, Mul, Sub};
+use std::{
+    f32::consts::PI,
+    ops::{Div, Mul, Sub},
+};
 
 use bevy::{
     prelude::*,
@@ -147,10 +150,14 @@ fn update_flares(
                         .lerp(direction.mul(velocity.0.length() * 1.1), 0.2);
                     continue;
                 } else if planet.has_magnetic_field {
-                    velocity.0 = velocity.0.lerp(
-                        direction.perp().mul(velocity.0.length()),
-                        0.1,
-                    );
+                    let mut perp = direction.perp();
+                    // We need to makee sure that it doesnt just suddenly make the flare go
+                    // backwards
+                    if direction.angle_between(velocity.0) < 0. {
+                        perp = Vec2::from_angle(perp.to_angle() + PI);
+                    }
+                    perp = perp.mul(velocity.0.length() * 1.1);
+                    velocity.0 = velocity.0.lerp(perp, 0.15);
                     // Planets with magnetic fields still absorb solar flare energy, just at a
                     // reduced rate
                     planet.absorbed_power += flare.0 / 20.;

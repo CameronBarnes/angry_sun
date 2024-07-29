@@ -15,7 +15,11 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(PreUpdate, clear_transients);
     app.add_systems(
         Update,
-        (move_planets, create_moon_shadows)
+        (
+            move_things_with_orbits,
+            create_moon_shadows,
+            move_moon_shadows,
+        )
             .chain()
             .run_if(in_state(Screen::Playing)),
     );
@@ -102,21 +106,23 @@ pub struct PlanetBundle<M: Material2d> {
     pub orbit: Orbit,
 }
 
-fn move_planets(
+fn move_things_with_orbits(
     time: Res<Time>,
-    mut planet_query: Query<(&mut Transform, &mut Orbit, &Planet), With<Orbit>>,
-    mut shadow_query: Query<&mut Transform, (With<PlanetShadow>, Without<Orbit>)>,
+    mut planet_query: Query<(&mut Transform, &mut Orbit), With<Orbit>>,
 ) {
-    if planet_query.is_empty() {
-        return;
-    }
-
-    for (mut transform, mut orbit, planet) in &mut planet_query {
+    for (mut transform, mut orbit) in &mut planet_query {
         orbit.increment_orbit(time.delta_seconds());
         let (x, y) = orbit.to_x_y();
         transform.translation.x = x;
         transform.translation.y = y;
+    }
+}
 
+fn move_moon_shadows(
+    planet_query: Query<(&Orbit, &Planet), With<Orbit>>,
+    mut shadow_query: Query<&mut Transform, (With<PlanetShadow>, Without<Orbit>)>,
+) {
+    for (orbit, planet) in &planet_query {
         // We have a separate function for handling moon shadows because it requires the global
         // transform and doesnt use the orbit
         if !planet.is_moon {
