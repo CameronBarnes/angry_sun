@@ -44,7 +44,7 @@ impl Sun {
 
     pub fn increment(&mut self, delta: f32) {
         self.last_flare += delta;
-        self.relative_power += delta * 0.000_001;
+        self.relative_power += delta * 0.000_1;
         if self.increasing {
             self.cycle_state += delta;
             self.increasing = self.cycle_state < CYCLE_PEAK;

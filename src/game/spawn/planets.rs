@@ -176,6 +176,7 @@ fn spawn_mercury<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        false,
         Some(2.5),
         PlanetResources(vec![
             RawResource::new(
@@ -216,6 +217,7 @@ fn spawn_venus<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        false,
         None,
         PlanetResources(vec![
             RawResource::new(
@@ -250,6 +252,7 @@ fn spawn_earth<A: Material2d>(
         shadow_color.clone(),
         vec![],
         true,
+        false,
         Some(0.5),
         PlanetResources(vec![
             RawResource::new(
@@ -288,6 +291,7 @@ fn spawn_earth<A: Material2d>(
         shadow_color,
         moon,
         false,
+        true,
         None,
         PlanetResources(vec![
             RawResource::new(
@@ -338,6 +342,7 @@ fn spawn_mars<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        false,
         None,
         PlanetResources(vec![
             RawResource::new(
@@ -386,6 +391,7 @@ fn spawn_jupiter<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        true,
         Some(0.3),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
@@ -415,6 +421,7 @@ fn spawn_saturn<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        true,
         Some(0.3),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
@@ -444,6 +451,7 @@ fn spawn_uranus<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        true,
         Some(0.6),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
@@ -473,6 +481,7 @@ fn spawn_neptune<A: Material2d>(
         shadow_color,
         vec![],
         false,
+        true,
         Some(0.6),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
@@ -496,6 +505,7 @@ fn spawn_planet<A: Material2d>(
     shadow_color: Handle<A>,
     children: Vec<Entity>,
     moon: bool,
+    magnetic_field: bool,
     zoom_scale: Option<f32>,
     resources: PlanetResources,
 ) -> Vec<Entity> {
@@ -522,6 +532,7 @@ fn spawn_planet<A: Material2d>(
     let mut planet = commands.spawn(PlanetBundle {
         planet: Planet {
             is_moon: moon,
+            has_magnetic_field: magnetic_field,
             shadow,
             size: scaled_size,
             absorbed_power: 0.,

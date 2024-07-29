@@ -33,6 +33,7 @@ fn clear_transients(mut commands: Commands, query: Query<Entity, With<Transient>
 #[derive(Component, Debug)]
 pub struct Planet {
     pub is_moon: bool,
+    pub has_magnetic_field: bool,
     pub shadow: Entity,
     pub size: f32,
     pub absorbed_power: f32,

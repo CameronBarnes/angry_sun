@@ -117,7 +117,7 @@ fn update_flares(
     mut planet_query: Query<(&mut Planet, &GlobalTransform), (With<Planet>, Without<Flare>)>,
 ) {
     for (flare, mut velocity, entity, mut transform) in &mut flare_query {
-        if transform.translation.length() > *LAST_PLANET_DISTANCE * 1.1 {
+        if transform.translation.length() > *LAST_PLANET_DISTANCE * 1.25 {
             if let Some(entity_commands) = commands.get_entity(entity) {
                 entity_commands.despawn_recursive();
             }
@@ -146,6 +146,14 @@ fn update_flares(
                         .0
                         .lerp(direction.mul(velocity.0.length() * 1.1), 0.2);
                     continue;
+                } else if planet.has_magnetic_field {
+                    velocity.0 = velocity.0.lerp(
+                        direction.perp().mul(velocity.0.length()),
+                        0.1,
+                    );
+                    // Planets with magnetic fields still absorb solar flare energy, just at a
+                    // reduced rate
+                    planet.absorbed_power += flare.0 / 20.;
                 }
                 let force = (planet.size * 50.) / distance.sub(planet.size).div(30.).powi(2);
                 velocity.0 += direction.mul(force).mul(time.delta_seconds());
