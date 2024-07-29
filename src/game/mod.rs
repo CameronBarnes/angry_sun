@@ -13,6 +13,7 @@ pub mod planets;
 pub mod resources;
 pub mod spawn;
 pub mod sun;
+pub mod unlocks;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((

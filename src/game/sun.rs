@@ -7,11 +7,7 @@ use crate::screen::Screen;
 
 use super::flare::SpawnFlare;
 
-#[derive(Event, Debug)]
-pub struct SpawnSun;
-
 pub(super) fn plugin(app: &mut App) {
-    app.observe(setup_sun);
     app.add_systems(Update, (update_sun).run_if(in_state(Screen::Playing)));
 }
 
@@ -77,14 +73,6 @@ impl Default for Sun {
             last_flare: 0.,
         }
     }
-}
-
-fn setup_sun(_trigger: Trigger<SpawnSun>, mut commands: Commands) {
-    commands.spawn((
-        Name::new("Sun"),
-        Sun::default(),
-        StateScoped(Screen::Playing),
-    ));
 }
 
 fn update_sun(time: Res<Time>, mut query: Query<&mut Sun, With<Sun>>, mut commands: Commands) {

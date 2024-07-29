@@ -15,7 +15,8 @@ use crate::{
         camera::{FinishZoom, ScaleWithZoom},
         highlight::{HasHighlightObject, HighlightObject, LinkSelectObject},
         planets::{Orbit, Planet, PlanetBundle},
-        sun::SpawnSun,
+        resources::{PlanetResources, RawResource},
+        sun::Sun,
     },
     screen::Screen,
 };
@@ -43,8 +44,6 @@ static MOON_RADIUS_SCALE: f32 = 1.5;
 pub static LAST_PLANET_DISTANCE: LazyLock<f32> =
     LazyLock::new(|| scale(4_530_000_000. * RADIUS_SCALE * 0.7));
 
-// FIXME: Fix the too many lines issue by breaking this up
-#[allow(clippy::too_many_lines)]
 fn spawn_solar_system(
     _trigger: Trigger<SpawnSolarSystem>,
     mut commands: Commands,
@@ -52,182 +51,436 @@ fn spawn_solar_system(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let shadow_color = materials.add(Color::BLACK.with_alpha(0.5));
-    let circle_color = materials.add(Color::WHITE.darker(0.8));
-    commands.trigger(SpawnSun);
+    let orbit_circle = materials.add(Color::WHITE.darker(0.8));
 
-    commands
-        .spawn((
-            Name::new("Sun"),
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(
-                        Circle::new(scale(1_400_000.))
-                            .mesh()
-                            .resolution(MESH_RESOLUTION)
-                            .build(),
-                    ),
-                ),
-                material: materials.add(Color::srgb(
-                    (253. / 255.) * 10.,
-                    (184. / 255.) * 10.,
-                    (19. / 255.) * 10.,
-                )),
-                ..Default::default()
-            },
-            ScaleWithZoom { ratio: 0.1 },
-            PickableBundle::default(),
-            FinishZoom::new_with_target(35.),
-        ))
-        .insert(StateScoped(Screen::Playing));
+    spawn_sun(&mut commands, &mut meshes, &mut materials);
 
-    spawn_planet(
+    spawn_mercury(
         &mut commands,
         &mut meshes,
         &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_venus(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_earth(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_mars(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_jupiter(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_saturn(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_uranus(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle.clone(),
+        shadow_color.clone(),
+    );
+
+    spawn_neptune(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        orbit_circle,
+        shadow_color,
+    );
+}
+
+fn spawn_sun(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) {
+    commands.spawn((
+        Name::new("Sun"),
+        Sun::default(),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Circle::new(scale(1_400_000.))
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                ),
+            ),
+            material: materials.add(Color::srgb(
+                (253. / 255.) * 10.,
+                (184. / 255.) * 10.,
+                (19. / 255.) * 10.,
+            )),
+            ..Default::default()
+        },
+        ScaleWithZoom { ratio: 0.1 },
+        PickableBundle::default(),
+        FinishZoom::new_with_target(35.),
+        PlanetResources(vec![RawResource::new(
+            "Hydrogen",
+            vec![(0.71 * scale(1_400_000.), "Stellar Lifting")],
+        )]),
+        StateScoped(Screen::Playing),
+    ));
+}
+
+fn spawn_mercury<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
+    spawn_planet(
+        commands,
+        meshes,
+        materials,
         Name::new("Mercury"),
         scale(57_000_000. * RADIUS_SCALE * 1.2), // We've adjusted mercury specifically because
         // it's so close to the sun
         scale(4_879. * PLANET_SCALE),
         88.,
         Color::srgb(183. / 255., 184. / 255., 185. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         vec![],
         false,
         Some(2.5),
+        PlanetResources(vec![
+            RawResource::new(
+                "Metals",
+                vec![
+                    (0.07, "Extra-Terrestrial Mining"),
+                    (0.7, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Silicate",
+                vec![
+                    (0.03, "Extra-Terrestrial Mining"),
+                    (0.3, "Deep Crust Mining"),
+                ],
+            ),
+        ]),
     );
+}
 
+fn spawn_venus<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Venus"),
         scale(108_000_000. * RADIUS_SCALE),
         scale(12_104. * PLANET_SCALE),
         224.7,
         Color::srgb(165. / 255., 124. / 255., 27. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         vec![],
         false,
         None,
+        PlanetResources(vec![
+            RawResource::new(
+                "Metals",
+                vec![(0.05, "Hot Surface Mining"), (0.5, "Deep Crust Mining")],
+            ),
+            RawResource::new(
+                "Silicate",
+                vec![(0.015, "Hot Surface Mining"), (0.15, "Deep Crust Mining")],
+            ),
+        ]),
     );
+}
 
+fn spawn_earth<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     let moon = spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Moon"),
         scale(384_400. * MOON_RADIUS_SCALE),
         scale(3_475. * MOON_SCALE),
         27.3,
         Color::srgb(246. / 255., 241. / 255., 213. / 255.),
-        circle_color.clone(),
+        orbit_circle.clone(),
         shadow_color.clone(),
         vec![],
         true,
         Some(0.5),
+        PlanetResources(vec![
+            RawResource::new(
+                "Metals",
+                vec![
+                    (0.03, "Extra-Terrestrial Mining"),
+                    (0.3, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Silicate",
+                vec![
+                    (0.02, "Extra-Terrestrial Mining"),
+                    (0.2, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Oxygen",
+                vec![
+                    (0.043, "Surface Mineral Decomposition"),
+                    (0.43, "Deep Crust Mining"),
+                ],
+            ),
+        ]),
     );
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Earth"),
         scale(149_000_000. * RADIUS_SCALE),
         scale(12_756. * PLANET_SCALE),
         365.25,
         Color::srgb(79. / 255., 76. / 255., 176. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         moon,
         false,
         None,
+        PlanetResources(vec![
+            RawResource::new(
+                "Metals",
+                vec![
+                    (0.025, "None"),
+                    (0.05, "Deep Sea Mining"),
+                    (0.5, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Silicate",
+                vec![
+                    (0.00725, "None"),
+                    (0.015, "Deep Sea Mining"),
+                    (0.15, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Oxygen",
+                vec![(0.003, "None"), (0.03, "Sea Water Electrolysis")],
+            ),
+            RawResource::new(
+                "Hydrogen",
+                vec![(0.0005, "None"), (0.03, "Sea Water Electrolysis")],
+            ),
+        ]),
     );
+}
 
+fn spawn_mars<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Mars"),
         scale(288_000_000. * RADIUS_SCALE),
         scale(6_790. * PLANET_SCALE),
         687.,
         Color::srgb(193. / 255., 68. / 255., 14. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         vec![],
         false,
         None,
+        PlanetResources(vec![
+            RawResource::new(
+                "Metals",
+                vec![
+                    (0.025, "Extra-Terrestrial Mining"),
+                    (0.25, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Silicate",
+                vec![
+                    (0.023, "Extra-Terrestrial Mining"),
+                    (0.23, "Deep Crust Mining"),
+                ],
+            ),
+            RawResource::new(
+                "Oxygen",
+                vec![
+                    (0.043, "Surface Mineral Decomposition"),
+                    (0.43, "Deep Crust Mining"),
+                ],
+            ),
+        ]),
     );
+}
 
+fn spawn_jupiter<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     // TODO: Add moons
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Jupiter"),
         scale(780_000_000. * RADIUS_SCALE * 0.8),
         scale(143_000. * PLANET_SCALE),
         4_330.6 * 0.8,
         Color::srgb(148. / 255., 105. / 255., 86. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         vec![],
         false,
         Some(0.3),
+        PlanetResources(vec![RawResource::new(
+            "Hydrogen",
+            vec![(0.9, "Gas Giant Mining")],
+        )]),
     );
+}
 
+fn spawn_saturn<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     // TODO: Add moons
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Saturn"),
         scale(1_437_000_000. * RADIUS_SCALE * 0.8),
         scale(120_536. * PLANET_SCALE),
         10_756. * 0.8,
         Color::srgb(206. / 255., 184. / 255., 184. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         vec![],
         false,
         Some(0.3),
+        PlanetResources(vec![RawResource::new(
+            "Hydrogen",
+            vec![(0.96, "Gas Giant Mining")],
+        )]),
     );
+}
 
+fn spawn_uranus<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     // TODO: Add moons
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Uranus"),
         scale(2_871_000_000. * RADIUS_SCALE * 0.7),
         scale(51_118. * PLANET_SCALE),
         30_687. * 0.7,
         Color::srgb(172. / 255., 229. / 255., 238. / 255.),
-        circle_color.clone(),
-        shadow_color.clone(),
+        orbit_circle,
+        shadow_color,
         vec![],
         false,
         Some(0.6),
+        PlanetResources(vec![RawResource::new(
+            "Hydrogen",
+            vec![(0.83, "Gas Giant Mining")],
+        )]),
     );
+}
 
+fn spawn_neptune<A: Material2d>(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    orbit_circle: Handle<A>,
+    shadow_color: Handle<A>,
+) {
     // TODO: Add moons
     spawn_planet(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
+        commands,
+        meshes,
+        materials,
         Name::new("Neptune"),
         *LAST_PLANET_DISTANCE,
         scale(49_528. * PLANET_SCALE),
         60_190. * 0.7,
         Color::srgb(120. / 255., 192. / 255., 168. / 255.),
-        circle_color,
+        orbit_circle,
         shadow_color,
         vec![],
         false,
         Some(0.6),
+        PlanetResources(vec![RawResource::new(
+            "Hydrogen",
+            vec![(0.80, "Gas Giant Mining")],
+        )]),
     );
 }
+
 // FIXME: Fix the too many lines issue by breaking this up
 #[allow(clippy::too_many_lines)]
 fn spawn_planet<A: Material2d>(
@@ -244,6 +497,7 @@ fn spawn_planet<A: Material2d>(
     children: Vec<Entity>,
     moon: bool,
     zoom_scale: Option<f32>,
+    resources: PlanetResources,
 ) -> Vec<Entity> {
     // Spawn planet shadow
     let shadow = commands
@@ -295,7 +549,8 @@ fn spawn_planet<A: Material2d>(
             ratio: zoom_scale.unwrap_or(1.),
         },
         PickableBundle::default(),
-        FinishZoom::default(),
+        FinishZoom::new_with_target(15. / zoom_scale.unwrap_or(1.)),
+        resources,
     ));
     // Add supplied children, usually moons
     for child in children {
