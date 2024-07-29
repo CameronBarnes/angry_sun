@@ -10,6 +10,7 @@ pub mod decay;
 pub mod flare;
 pub mod highlight;
 pub mod planets;
+pub mod resources;
 pub mod spawn;
 pub mod sun;
 

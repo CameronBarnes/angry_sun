@@ -76,6 +76,7 @@ fn spawn_solar_system(
             },
             ScaleWithZoom { ratio: 0.1 },
             PickableBundle::default(),
+            FinishZoom::new_with_target(35.),
         ))
         .insert(StateScoped(Screen::Playing));
 
@@ -138,7 +139,7 @@ fn spawn_solar_system(
         Color::srgb(79. / 255., 76. / 255., 176. / 255.),
         circle_color.clone(),
         shadow_color.clone(),
-        vec![moon.0, moon.1],
+        moon,
         false,
         None,
     );
@@ -227,7 +228,8 @@ fn spawn_solar_system(
         Some(0.6),
     );
 }
-
+// FIXME: Fix the too many lines issue by breaking this up
+#[allow(clippy::too_many_lines)]
 fn spawn_planet<A: Material2d>(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -242,7 +244,7 @@ fn spawn_planet<A: Material2d>(
     children: Vec<Entity>,
     moon: bool,
     zoom_scale: Option<f32>,
-) -> (Entity, Entity) {
+) -> Vec<Entity> {
     // Spawn planet shadow
     let shadow = commands
         .spawn((
@@ -260,28 +262,6 @@ fn spawn_planet<A: Material2d>(
         //.insert(ScaleWithZoom {
         //    ratio: zoom_scale.unwrap_or(1.),
         //})
-        .id();
-
-    // Spawn the highlight circle
-    let highlight = commands
-        .spawn((
-            HighlightObject,
-            StateScoped(Screen::Playing),
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(
-                        Circle::new(scaled_size * 1.4)
-                            .mesh()
-                            .resolution(MESH_RESOLUTION)
-                            .build(),
-                    ),
-                ),
-                material: materials.add(Color::WHITE),
-                visibility: Visibility::Hidden,
-                transform: Transform::from_xyz(0., 0., -3.),
-                ..Default::default()
-            },
-        ))
         .id();
 
     // Spawn the planet
@@ -308,7 +288,6 @@ fn spawn_planet<A: Material2d>(
         orbit: Orbit::circle(scaled_radius, orbital_period),
     });
     planet.add_child(shadow);
-    planet.add_child(highlight);
     // Handle it being StateScoped and handle ScaleWithZoom
     planet.insert((
         StateScoped(Screen::Playing),
@@ -316,7 +295,6 @@ fn spawn_planet<A: Material2d>(
             ratio: zoom_scale.unwrap_or(1.),
         },
         PickableBundle::default(),
-        HasHighlightObject(highlight),
         FinishZoom::default(),
     ));
     // Add supplied children, usually moons
@@ -325,7 +303,8 @@ fn spawn_planet<A: Material2d>(
     }
 
     let planet = planet.id();
-    let border_width = if moon { 6. } else { 60. };
+    let (border_width, highlight_circle, width_modifier) =
+        if moon { (6., 1.6, 10.) } else { (60., 1.4, 5.) };
 
     // Spawn the orbit circle
     let orbit_id = commands
@@ -340,7 +319,7 @@ fn spawn_planet<A: Material2d>(
                             .build(),
                     ),
                 ),
-                material: orbit_circle,
+                material: orbit_circle.clone(),
                 transform: Transform::from_xyz(0., 0., -2.),
                 ..Default::default()
             },
@@ -350,7 +329,65 @@ fn spawn_planet<A: Material2d>(
         ))
         .id();
 
-    (planet, orbit_id)
+    // We want a second bigger orbit circle for selection purposes
+    let orbit_selection_circle = commands
+        .spawn((
+            OrbitRing,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Annulus::new(
+                            border_width.mul_add(-width_modifier, scaled_radius),
+                            border_width.mul_add(width_modifier, scaled_radius),
+                        )
+                        .mesh()
+                        .resolution(MESH_RESOLUTION)
+                        .build(),
+                    ),
+                ),
+                material: orbit_circle,
+                transform: Transform::from_xyz(0., 0., -2.),
+                visibility: Visibility::Hidden,
+                ..Default::default()
+            },
+            StateScoped(Screen::Playing),
+            LinkSelectObject(planet),
+            PickableBundle::default(),
+        ))
+        .id();
+
+    // Spawn the highlight circle
+    let highlight = commands
+        .spawn((
+            HighlightObject,
+            StateScoped(Screen::Playing),
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scaled_size * highlight_circle)
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
+                material: materials.add(Color::WHITE),
+                visibility: Visibility::Hidden,
+                transform: Transform::from_xyz(0., 0., -3.),
+                ..Default::default()
+            },
+            PickableBundle::default(),
+            LinkSelectObject(planet),
+        ))
+        .id();
+
+    let mut planet = commands
+        .get_entity(planet)
+        .expect("Planet should always be valid, we just created it");
+
+    planet.insert(HasHighlightObject(highlight));
+    planet.add_child(highlight);
+
+    vec![planet.id(), orbit_id, orbit_selection_circle]
 }
 
 pub fn scale(original: f32) -> f32 {

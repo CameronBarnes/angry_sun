@@ -31,7 +31,7 @@ impl Sun {
         self.relative_power * self.cycle_power()
     }
 
-    fn cycle_power(&self) -> f32 {
+    pub fn cycle_power(&self) -> f32 {
         self.cycle_state / CYCLE_PEAK + 0.5
     }
 

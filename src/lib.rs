@@ -10,7 +10,10 @@ use bevy::{
     core_pipeline::bloom::BloomSettings,
     prelude::*,
 };
-use bevy_mod_picking::DefaultPickingPlugins;
+use bevy_mod_picking::{
+    backends::raycast::{bevy_mod_raycast::prelude::RaycastVisibility, RaycastBackendSettings},
+    DefaultPickingPlugins,
+};
 use bevy_pancam::{PanCam, PanCamPlugin};
 
 pub struct AppPlugin;
@@ -54,6 +57,11 @@ impl Plugin for AppPlugin {
                     ..default()
                 }),
         );
+
+        app.insert_resource(RaycastBackendSettings {
+            raycast_visibility: RaycastVisibility::Ignore,
+            ..Default::default()
+        });
 
         // Add camera plugin
         app.add_plugins(PanCamPlugin);

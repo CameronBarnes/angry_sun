@@ -105,7 +105,7 @@ fn spawn_flare(
     let speed = speed_mod.mul_add(0.5, 1.0);
     commands.trigger(PlaySfx::KeyVolSpeed(
         SfxKey::Thunder,
-        0.15 * trigger.event().power,
+        0.05 * trigger.event().power,
         speed,
     ));
 }

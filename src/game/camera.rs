@@ -16,8 +16,29 @@ impl Default for ScaleWithZoom {
     }
 }
 
-#[derive(Default, Debug, Component)]
-pub struct FinishZoom(bool);
+#[derive(Debug, Component)]
+pub struct FinishZoom {
+    finished: bool,
+    target: f32,
+}
+
+impl Default for FinishZoom {
+    fn default() -> Self {
+        Self {
+            finished: false,
+            target: 15.,
+        }
+    }
+}
+
+impl FinishZoom {
+    pub const fn new_with_target(target: f32) -> Self {
+        Self {
+            finished: false,
+            target,
+        }
+    }
+}
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -61,10 +82,12 @@ fn camera_follow(
                 camera_transform.translation = camera_transform
                     .translation
                     .lerp(transform.translation().xy().extend(0.), 0.1);
-                if !finish_zoom.0 && projection.scale > 16. || projection.scale < 1. {
-                    projection.scale = projection.scale.lerp(15., 0.1);
+                if !finish_zoom.finished && projection.scale > finish_zoom.target + 1.
+                    || projection.scale < 1.
+                {
+                    projection.scale = projection.scale.lerp(finish_zoom.target, 0.1);
                 } else {
-                    finish_zoom.0 = true;
+                    finish_zoom.finished = true;
                 }
             }
         }
