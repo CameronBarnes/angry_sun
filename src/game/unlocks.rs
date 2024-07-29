@@ -1,8 +1,22 @@
-use bevy::{prelude::Resource, utils::HashSet};
+use bevy::{prelude::*, utils::HashSet};
 
-#[derive(Resource, Debug, Default)]
+pub(super) fn plugin(app: &mut App) {
+    app.insert_resource(TechUnlocks::new());
+}
+
+#[derive(Resource, Debug)]
 pub struct TechUnlocks {
     techs: HashSet<&'static str>,
+}
+
+impl TechUnlocks {
+    pub fn new() -> Self {
+        let mut tmp = Self {
+            techs: HashSet::default(),
+        };
+        tmp.put("None");
+        tmp
+    }
 }
 
 impl TechUnlocks {

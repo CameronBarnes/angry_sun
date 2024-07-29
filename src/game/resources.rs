@@ -2,27 +2,53 @@ use bevy::prelude::*;
 
 use super::unlocks::TechUnlocks;
 
+pub(super) fn plugin(app: &mut App) {
+    app.insert_resource(HarvestedResources::default());
+    app.add_systems(PreUpdate, update_resource_text);
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord)]
+pub enum RawResourceType {
+    Metals,
+    Silicate,
+    Hydrogen,
+    Oxygen,
+    Power,
+}
+
+#[derive(Debug, Component)]
+pub struct ResourceLabel(pub RawResourceType);
+
+#[derive(Resource, Debug, Default)]
+pub struct HarvestedResources {
+    pub metals: f32,
+    pub silicate: f32,
+    pub hydrogen: f32,
+    pub oxygen: f32,
+    pub power: f32,
+}
+
 #[derive(Component, Debug)]
 pub struct PlanetResources(pub Vec<RawResource>);
 
 #[derive(Debug)]
 pub struct RawResource {
-    name: &'static str,
+    resource_type: RawResourceType,
     levels: Vec<(f32, &'static str)>,
     consumed: f32,
 }
 
 impl RawResource {
-    pub const fn new(name: &'static str, levels: Vec<(f32, &'static str)>) -> Self {
+    pub const fn new(res_type: RawResourceType, levels: Vec<(f32, &'static str)>) -> Self {
         Self {
-            name,
+            resource_type: res_type,
             levels,
             consumed: 0.,
         }
     }
 
-    pub const fn name(&self) -> &'static str {
-        self.name
+    pub const fn name(&self) -> RawResourceType {
+        self.resource_type
     }
 
     pub fn apply_scale(&mut self, size: f32) {
@@ -60,5 +86,20 @@ impl RawResource {
 
     pub fn increment_consumed(&mut self, consumed: f32) {
         self.consumed += consumed;
+    }
+}
+
+fn update_resource_text(
+    resources: Res<HarvestedResources>,
+    mut text_query: Query<(&mut Text, &ResourceLabel), With<ResourceLabel>>,
+) {
+    for (mut text, res_type) in &mut text_query {
+        match res_type.0 {
+            RawResourceType::Metals => text.sections[0].value = resources.metals.to_string(),
+            RawResourceType::Silicate => text.sections[0].value = resources.silicate.to_string(),
+            RawResourceType::Hydrogen => text.sections[0].value = resources.hydrogen.to_string(),
+            RawResourceType::Oxygen => text.sections[0].value = resources.oxygen.to_string(),
+            RawResourceType::Power => text.sections[0].value = resources.power.to_string(),
+        }
     }
 }

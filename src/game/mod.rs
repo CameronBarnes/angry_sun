@@ -27,5 +27,7 @@ pub fn plugin(app: &mut App) {
         flare::plugin,
         decay::plugin,
         highlight::plugin,
+        resources::plugin,
+        unlocks::plugin,
     ));
 }

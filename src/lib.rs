@@ -75,6 +75,25 @@ impl Plugin for AppPlugin {
         // Enable dev tools for dev builds.
         #[cfg(feature = "dev")]
         app.add_plugins(dev_tools::plugin);
+
+        #[cfg(feature = "dev")]
+        {
+            app.add_plugins(bevy::dev_tools::ui_debug_overlay::DebugUiPlugin)
+                .add_systems(Update, toggle_overlay);
+        }
+    }
+}
+
+#[cfg(feature = "dev")]
+// The system that will enable/disable the debug outlines around the nodes
+fn toggle_overlay(
+    input: Res<ButtonInput<KeyCode>>,
+    mut options: ResMut<bevy::dev_tools::ui_debug_overlay::UiDebugOptions>,
+) {
+    info_once!("The debug outlines are enabled, press Space to turn them on/off");
+    if input.just_pressed(KeyCode::Space) {
+        // The toggle method will enable the debug_overlay if disabled and disable if enabled
+        options.toggle();
     }
 }
 

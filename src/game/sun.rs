@@ -8,8 +8,15 @@ use crate::screen::Screen;
 use super::flare::SpawnFlare;
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_systems(PreUpdate, update_sun_labels);
     app.add_systems(Update, (update_sun).run_if(in_state(Screen::Playing)));
 }
+
+#[derive(Debug, Component)]
+pub struct SunCycleLabel;
+
+#[derive(Debug, Component)]
+pub struct SunPowerLabel;
 
 static CYCLE_PEAK: f32 = 4017.75 / 2.;
 static FLARE_FREQUENCY: f32 = 2.;
@@ -28,7 +35,11 @@ impl Sun {
     }
 
     pub fn cycle_power(&self) -> f32 {
-        self.cycle_state / CYCLE_PEAK + 0.5
+        self.raw_cycle_state() + 0.5
+    }
+
+    pub fn raw_cycle_state(&self) -> f32 {
+        self.cycle_state / CYCLE_PEAK
     }
 
     pub fn increment(&mut self, delta: f32) {
@@ -80,6 +91,22 @@ fn update_sun(time: Res<Time>, mut query: Query<&mut Sun, With<Sun>>, mut comman
         sun.increment(time.delta_seconds());
         if let Some((power, size)) = sun.flare() {
             commands.trigger(SpawnFlare { power, size });
+        }
+    }
+}
+
+fn update_sun_labels(
+    sun_query: Query<&Sun, With<Sun>>,
+    mut sun_power_query: Query<&mut Text, With<SunPowerLabel>>,
+    mut sun_cycle_query: Query<&mut Text, (With<SunCycleLabel>, Without<SunPowerLabel>)>,
+) {
+    if let Ok(sun) = sun_query.get_single() {
+        if let Ok(mut power_label) = sun_power_query.get_single_mut() {
+            power_label.sections[0].value = format!("{:.4}", sun.power_scale());
+        }
+
+        if let Ok(mut cycle_label) = sun_cycle_query.get_single_mut() {
+            cycle_label.sections[0].value = format!("{:.4}", sun.raw_cycle_state());
         }
     }
 }
