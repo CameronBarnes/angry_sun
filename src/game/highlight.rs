@@ -5,7 +5,7 @@ use super::planets::Planet;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
-        Update,
+        PreUpdate,
         (handle_linked_selection_objects, handle_highlighting).chain(),
     );
 }

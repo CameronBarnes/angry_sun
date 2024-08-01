@@ -8,7 +8,11 @@ use bevy::{
     prelude::*,
     sprite::{ColorMaterial, Material2d, MaterialMesh2dBundle, Mesh2dHandle},
 };
-use bevy_mod_picking::PickableBundle;
+use bevy_mod_picking::{
+    events::{Click, Pointer},
+    prelude::On,
+    PickableBundle,
+};
 
 use crate::{
     game::{
@@ -19,6 +23,7 @@ use crate::{
         sun::Sun,
     },
     screen::Screen,
+    ui::resource_ui::SpawnPlanetUI,
 };
 
 #[derive(Event, Debug)]
@@ -562,6 +567,9 @@ fn spawn_planet<A: Material2d>(
         PickableBundle::default(),
         FinishZoom::new_with_target(15. / zoom_scale.unwrap_or(1.)),
         resources,
+        On::<Pointer<Click>>::run(|mut commands: Commands| {
+            commands.trigger(SpawnPlanetUI);
+        }),
     ));
     // Add supplied children, usually moons
     for child in children {
@@ -619,6 +627,9 @@ fn spawn_planet<A: Material2d>(
             StateScoped(Screen::Playing),
             LinkSelectObject(planet),
             PickableBundle::default(),
+            On::<Pointer<Click>>::run(|mut commands: Commands| {
+                commands.trigger(SpawnPlanetUI);
+            }),
         ))
         .id();
 
@@ -643,6 +654,9 @@ fn spawn_planet<A: Material2d>(
             },
             PickableBundle::default(),
             LinkSelectObject(planet),
+            On::<Pointer<Click>>::run(|mut commands: Commands| {
+                commands.trigger(SpawnPlanetUI);
+            }),
         ))
         .id();
 
