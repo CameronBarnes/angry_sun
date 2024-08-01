@@ -18,6 +18,7 @@ pub(super) fn plugin(app: &mut App) {
 // FIXME: Fix the too many lines issue by breaking this up
 #[allow(clippy::too_many_lines)]
 fn spawn_resource_ui(_trigger: Trigger<SpawnResourceUIEvent>, mut commands: Commands) {
+    info! {"Spawning Resource UI"};
     // Spawn UI
     commands
         .spawn(NodeBundle {

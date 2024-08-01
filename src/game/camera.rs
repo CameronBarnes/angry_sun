@@ -5,6 +5,9 @@ use bevy_mod_picking::prelude::PickSelection;
 
 use crate::screen::Screen;
 
+#[derive(Event, Debug)]
+pub struct ClearFinishZoomEvent;
+
 #[derive(Component, Debug)]
 pub struct ScaleWithZoom {
     pub ratio: f32,
@@ -41,10 +44,20 @@ impl FinishZoom {
 }
 
 pub(super) fn plugin(app: &mut App) {
+    app.observe(clear_finish_zoom_event);
     app.add_systems(
         Update,
         (scale_with_zoom, camera_follow).run_if(in_state(Screen::Playing)),
     );
+}
+
+fn clear_finish_zoom_event(
+    _trigger: Trigger<ClearFinishZoomEvent>,
+    mut finish_zoom_query: Query<&mut FinishZoom>,
+) {
+    for mut finish_zoom in &mut finish_zoom_query {
+        finish_zoom.finished = false;
+    }
 }
 
 fn scale_with_zoom(

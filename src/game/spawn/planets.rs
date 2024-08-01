@@ -16,14 +16,13 @@ use bevy_mod_picking::{
 
 use crate::{
     game::{
-        camera::{FinishZoom, ScaleWithZoom},
+        camera::{ClearFinishZoomEvent, FinishZoom, ScaleWithZoom},
         highlight::{HighlightObject, LinkSelectionObject},
         planets::{Orbit, Planet, PlanetBundle},
         resources::{PlanetResources, RawResource, RawResourceType},
         sun::Sun,
     },
     screen::Screen,
-    ui::resource_ui::SpawnPlanetUI,
 };
 
 #[derive(Event, Debug)]
@@ -548,8 +547,8 @@ fn spawn_planet<A: Material2d>(
         PickableBundle::default(),
         FinishZoom::new_with_target(15. / zoom_scale.unwrap_or(1.)),
         resources,
-        On::<Pointer<Click>>::run(|mut commands: Commands| {
-            commands.trigger(SpawnPlanetUI);
+        On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
+            commands.trigger(ClearFinishZoomEvent);
         }),
     ));
     planet.with_children(|parent| {
@@ -572,8 +571,8 @@ fn spawn_planet<A: Material2d>(
             },
             PickableBundle::default(),
             LinkSelectionObject(parent.parent_entity()),
-            On::<Pointer<Click>>::run(|mut commands: Commands| {
-                commands.trigger(SpawnPlanetUI);
+            On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
+                commands.trigger(ClearFinishZoomEvent);
             }),
         ));
 
@@ -582,6 +581,9 @@ fn spawn_planet<A: Material2d>(
             PlanetShadow,
             PickableBundle::default(),
             LinkSelectionObject(parent.parent_entity()),
+            On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
+                commands.trigger(ClearFinishZoomEvent);
+            }),
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(
                     meshes.add(CircularSector::new(scaled_size, std::f32::consts::PI / 2.)),
@@ -620,8 +622,8 @@ fn spawn_planet<A: Material2d>(
             StateScoped(Screen::Playing),
             LinkSelectionObject(planet),
             PickableBundle::default(),
-            On::<Pointer<Click>>::run(|mut commands: Commands| {
-                commands.trigger(SpawnPlanetUI);
+            On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
+                commands.trigger(ClearFinishZoomEvent);
             }),
         ))
         .id();
@@ -650,8 +652,8 @@ fn spawn_planet<A: Material2d>(
             StateScoped(Screen::Playing),
             LinkSelectionObject(planet),
             PickableBundle::default(),
-            On::<Pointer<Click>>::run(|mut commands: Commands| {
-                commands.trigger(SpawnPlanetUI);
+            On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
+                commands.trigger(ClearFinishZoomEvent);
             }),
         ))
         .id();

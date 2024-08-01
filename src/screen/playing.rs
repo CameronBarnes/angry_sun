@@ -3,10 +3,9 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use super::Screen;
-use crate::{
-    game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack, spawn::level::SpawnLevel},
-    ui::planet_ui::SpawnResourceUIEvent,
-};
+use crate::{game::{
+    assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack, spawn::level::SpawnLevel,
+}, ui::resource_ui::SpawnResourceUIEvent};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Playing), enter_playing);
