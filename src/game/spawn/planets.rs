@@ -515,7 +515,7 @@ fn spawn_planet<A: Material2d>(
     resources: PlanetResources,
 ) -> Vec<Entity> {
     let (border_width, highlight_circle, width_modifier) =
-        if moon { (6., 1.6, 10.) } else { (60., 1.4, 5.) };
+        if moon { (6., 1.6, 20.) } else { (60., 1.4, 5.) };
 
     // Spawn the planet
     let mut planet = commands.spawn((
@@ -620,6 +620,9 @@ fn spawn_planet<A: Material2d>(
             StateScoped(Screen::Playing),
             LinkSelectionObject(planet),
             PickableBundle::default(),
+            On::<Pointer<Click>>::run(|mut commands: Commands| {
+                commands.trigger(SpawnPlanetUI);
+            }),
         ))
         .id();
 

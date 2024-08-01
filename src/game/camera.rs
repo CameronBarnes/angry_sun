@@ -85,7 +85,7 @@ fn camera_follow(
                 if !finish_zoom.finished && projection.scale > finish_zoom.target + 1.
                     || projection.scale < 1.
                 {
-                    projection.scale = projection.scale.lerp(finish_zoom.target, 0.1);
+                    projection.scale = projection.scale.lerp(finish_zoom.target, 0.2);
                 } else {
                     finish_zoom.finished = true;
                 }
