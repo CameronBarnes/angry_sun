@@ -14,14 +14,11 @@ pub(super) fn plugin(app: &mut App) {
 pub struct HighlightObject;
 
 #[derive(Component, Debug)]
-pub struct HasHighlightObject(pub Entity);
-
-#[derive(Component, Debug)]
-pub struct LinkSelectObject(pub Entity);
+pub struct LinkSelectionObject(pub Entity);
 
 fn handle_linked_selection_objects(
-    mut ring_query: Query<(&LinkSelectObject, &mut PickSelection), With<LinkSelectObject>>,
-    mut planet_query: Query<&mut PickSelection, (With<Planet>, Without<LinkSelectObject>)>,
+    mut ring_query: Query<(&LinkSelectionObject, &mut PickSelection), With<LinkSelectionObject>>,
+    mut planet_query: Query<&mut PickSelection, (With<Planet>, Without<LinkSelectionObject>)>,
 ) {
     for (link, mut selected) in &mut ring_query {
         if selected.is_selected {
@@ -36,20 +33,18 @@ fn handle_linked_selection_objects(
 }
 
 fn handle_highlighting(
-    mut highlight_query: Query<&mut Visibility, With<HighlightObject>>,
-    source_query: Query<(&HasHighlightObject, &PickSelection), With<HasHighlightObject>>,
+    mut highlight_query: Query<(&mut Visibility, &Parent), With<HighlightObject>>,
+    source_query: Query<&PickSelection>,
 ) {
-    // Clear existing
-    for mut highlight in &mut highlight_query {
-        *highlight = Visibility::Hidden;
-    }
-
-    // Enable for anything currently selected
-    for (highlight_object, selection) in &source_query {
-        if selection.is_selected {
-            if let Ok(mut highlight) = highlight_query.get_mut(highlight_object.0) {
+    for (mut highlight, parent) in &mut highlight_query {
+        if let Ok(selection) = source_query.get(parent.get()) {
+            if selection.is_selected {
                 *highlight = Visibility::Visible;
+            } else {
+                *highlight = Visibility::Hidden;
             }
+        } else {
+            *highlight = Visibility::Hidden;
         }
     }
 }

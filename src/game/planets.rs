@@ -15,11 +15,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(PreUpdate, clear_transients);
     app.add_systems(
         Update,
-        (
-            move_things_with_orbits,
-            create_moon_shadows,
-            move_moon_shadows,
-        )
+        (move_things_with_orbits, move_planet_shadows)
             .chain()
             .run_if(in_state(Screen::Playing)),
     );
@@ -38,7 +34,6 @@ fn clear_transients(mut commands: Commands, query: Query<Entity, With<Transient>
 pub struct Planet {
     pub is_moon: bool,
     pub has_magnetic_field: bool,
-    pub shadow: Entity,
     pub size: f32,
     pub absorbed_power: f32,
 }
@@ -81,19 +76,20 @@ impl Orbit {
     }
 }
 
-fn create_moon_shadows(
-    planet_query: Query<(&GlobalTransform, &Planet), With<Orbit>>,
-    mut shadow_query: Query<&mut Transform, With<PlanetShadow>>,
+fn move_planet_shadows(
+    planet_query: Query<(&Orbit, &GlobalTransform, &Planet), With<Orbit>>,
+    mut shadow_query: Query<(&mut Transform, &Parent), With<PlanetShadow>>,
 ) {
-    for (transform, planet) in &planet_query {
-        if planet.is_moon {
-            let translation = transform.translation();
-            let sun_angle = (planet.size / translation.x.hypot(translation.y).abs()).atan();
-            let angle_around_sun = translation.xy().to_angle() + sun_angle.abs() / 2.;
-            if let Ok(mut shadow) = shadow_query.get_mut(planet.shadow) {
-                shadow.rotation =
-                    Quat::from_rotation_z(angle_around_sun - std::f32::consts::PI / 2.);
-            }
+    for (mut shadow, parent) in &mut shadow_query {
+        if let Ok((orbit, transform, planet)) = planet_query.get(parent.get()) {
+            let angle = if planet.is_moon {
+                let translation = transform.translation();
+                let sun_angle = (planet.size / translation.x.hypot(translation.y).abs()).atan();
+                translation.xy().to_angle() + sun_angle.abs() / 2.
+            } else {
+                orbit.angle().to_radians()
+            };
+            shadow.rotation = Quat::from_rotation_z(angle - std::f32::consts::PI / 2.);
         }
     }
 }
@@ -115,21 +111,5 @@ fn move_things_with_orbits(
         let (x, y) = orbit.to_x_y();
         transform.translation.x = x;
         transform.translation.y = y;
-    }
-}
-
-fn move_moon_shadows(
-    planet_query: Query<(&Orbit, &Planet), With<Orbit>>,
-    mut shadow_query: Query<&mut Transform, (With<PlanetShadow>, Without<Orbit>)>,
-) {
-    for (orbit, planet) in &planet_query {
-        // We have a separate function for handling moon shadows because it requires the global
-        // transform and doesnt use the orbit
-        if !planet.is_moon {
-            let angle = orbit.angle().to_radians();
-            if let Ok(mut shadow) = shadow_query.get_mut(planet.shadow) {
-                shadow.rotation = Quat::from_rotation_z(angle - std::f32::consts::PI / 2.);
-            }
-        }
     }
 }

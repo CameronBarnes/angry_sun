@@ -17,7 +17,7 @@ use bevy_mod_picking::{
 use crate::{
     game::{
         camera::{FinishZoom, ScaleWithZoom},
-        highlight::{HasHighlightObject, HighlightObject, LinkSelectObject},
+        highlight::{HighlightObject, LinkSelectionObject},
         planets::{Orbit, Planet, PlanetBundle},
         resources::{PlanetResources, RawResource, RawResourceType},
         sun::Sun,
@@ -514,52 +514,33 @@ fn spawn_planet<A: Material2d>(
     zoom_scale: Option<f32>,
     resources: PlanetResources,
 ) -> Vec<Entity> {
-    // Spawn planet shadow
-    let shadow = commands
-        .spawn((
-            PlanetShadow,
-            StateScoped(Screen::Playing),
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(CircularSector::new(scaled_size, std::f32::consts::PI / 2.)),
-                ),
-                material: shadow_color,
-                transform: Transform::from_xyz(0., 0., 1.),
-                ..Default::default()
-            },
-        ))
-        //.insert(ScaleWithZoom {
-        //    ratio: zoom_scale.unwrap_or(1.),
-        //})
-        .id();
+    let (border_width, highlight_circle, width_modifier) =
+        if moon { (6., 1.6, 10.) } else { (60., 1.4, 5.) };
 
     // Spawn the planet
-    let mut planet = commands.spawn(PlanetBundle {
-        planet: Planet {
-            is_moon: moon,
-            has_magnetic_field: magnetic_field,
-            shadow,
-            size: scaled_size,
-            absorbed_power: 0.,
-        },
-        name,
-        mat_mesh: MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(
-                meshes.add(
-                    Circle::new(scaled_size)
-                        .mesh()
-                        .resolution(MESH_RESOLUTION)
-                        .build(),
+    let mut planet = commands.spawn((
+        PlanetBundle {
+            planet: Planet {
+                is_moon: moon,
+                has_magnetic_field: magnetic_field,
+                size: scaled_size,
+                absorbed_power: 0.,
+            },
+            name,
+            mat_mesh: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scaled_size)
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
                 ),
-            ),
-            material: materials.add(color),
-            ..Default::default()
+                material: materials.add(color),
+                ..Default::default()
+            },
+            orbit: Orbit::circle(scaled_radius, orbital_period),
         },
-        orbit: Orbit::circle(scaled_radius, orbital_period),
-    });
-    planet.add_child(shadow);
-    // Handle it being StateScoped and handle ScaleWithZoom
-    planet.insert((
         StateScoped(Screen::Playing),
         ScaleWithZoom {
             ratio: zoom_scale.unwrap_or(1.),
@@ -571,14 +552,53 @@ fn spawn_planet<A: Material2d>(
             commands.trigger(SpawnPlanetUI);
         }),
     ));
+    planet.with_children(|parent| {
+        parent.spawn((
+            // Spawn the highlight circle
+            HighlightObject,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(
+                        Circle::new(scaled_size * highlight_circle)
+                            .mesh()
+                            .resolution(MESH_RESOLUTION)
+                            .build(),
+                    ),
+                ),
+                material: materials.add(Color::WHITE),
+                visibility: Visibility::Hidden,
+                transform: Transform::from_xyz(0., 0., -3.),
+                ..Default::default()
+            },
+            PickableBundle::default(),
+            LinkSelectionObject(parent.parent_entity()),
+            On::<Pointer<Click>>::run(|mut commands: Commands| {
+                commands.trigger(SpawnPlanetUI);
+            }),
+        ));
+
+        parent.spawn((
+            // Spawn planet shadow
+            PlanetShadow,
+            PickableBundle::default(),
+            LinkSelectionObject(parent.parent_entity()),
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(
+                    meshes.add(CircularSector::new(scaled_size, std::f32::consts::PI / 2.)),
+                ),
+                material: shadow_color,
+                transform: Transform::from_xyz(0., 0., 1.),
+                ..Default::default()
+            },
+        ));
+    });
+
     // Add supplied children, usually moons
     for child in children {
         planet.add_child(child);
     }
 
     let planet = planet.id();
-    let (border_width, highlight_circle, width_modifier) =
-        if moon { (6., 1.6, 10.) } else { (60., 1.4, 5.) };
 
     // Spawn the orbit circle
     let orbit_id = commands
@@ -598,7 +618,7 @@ fn spawn_planet<A: Material2d>(
                 ..Default::default()
             },
             StateScoped(Screen::Playing),
-            LinkSelectObject(planet),
+            LinkSelectionObject(planet),
             PickableBundle::default(),
         ))
         .id();
@@ -625,7 +645,7 @@ fn spawn_planet<A: Material2d>(
                 ..Default::default()
             },
             StateScoped(Screen::Playing),
-            LinkSelectObject(planet),
+            LinkSelectionObject(planet),
             PickableBundle::default(),
             On::<Pointer<Click>>::run(|mut commands: Commands| {
                 commands.trigger(SpawnPlanetUI);
@@ -633,41 +653,7 @@ fn spawn_planet<A: Material2d>(
         ))
         .id();
 
-    // Spawn the highlight circle
-    let highlight = commands
-        .spawn((
-            HighlightObject,
-            StateScoped(Screen::Playing),
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(
-                        Circle::new(scaled_size * highlight_circle)
-                            .mesh()
-                            .resolution(MESH_RESOLUTION)
-                            .build(),
-                    ),
-                ),
-                material: materials.add(Color::WHITE),
-                visibility: Visibility::Hidden,
-                transform: Transform::from_xyz(0., 0., -3.),
-                ..Default::default()
-            },
-            PickableBundle::default(),
-            LinkSelectObject(planet),
-            On::<Pointer<Click>>::run(|mut commands: Commands| {
-                commands.trigger(SpawnPlanetUI);
-            }),
-        ))
-        .id();
-
-    let mut planet = commands
-        .get_entity(planet)
-        .expect("Planet should always be valid, we just created it");
-
-    planet.insert(HasHighlightObject(highlight));
-    planet.add_child(highlight);
-
-    vec![planet.id(), orbit_id, orbit_selection_circle]
+    vec![planet, orbit_id, orbit_selection_circle]
 }
 
 pub fn scale(original: f32) -> f32 {
