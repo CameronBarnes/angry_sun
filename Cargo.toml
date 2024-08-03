@@ -5,10 +5,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.14", features = ["mp3"] }
+bevy = { version = "0.14", features = ["wayland", "mp3"] }
 
 bevy_pancam = "0.12"
 bevy_mod_picking = { version = "0.20", features = ["selection", "backend_raycast"], default-features = false }
+sickle_ui = "0.2"
 
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [

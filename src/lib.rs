@@ -15,6 +15,7 @@ use bevy_mod_picking::{
     DefaultPickingPlugins,
 };
 use bevy_pancam::{PanCam, PanCamPlugin};
+use sickle_ui::SickleUiPlugin;
 
 pub struct AppPlugin;
 
@@ -65,6 +66,9 @@ impl Plugin for AppPlugin {
 
         // Add camera plugin
         app.add_plugins(PanCamPlugin);
+
+        // UI Plugin
+        app.add_plugins(SickleUiPlugin);
 
         //Picking
         app.add_plugins(DefaultPickingPlugins);

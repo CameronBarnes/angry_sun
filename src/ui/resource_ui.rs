@@ -34,7 +34,7 @@ fn spawn_resource_ui(_trigger: Trigger<SpawnResourceUIEvent>, mut commands: Comm
                 grid_template_rows: vec![GridTrack::flex(1.)],
                 ..Default::default()
             },
-            //background_color: Color::srgb(0.45, 0.45, 0.45).with_alpha(0.55).into(),
+            background_color: Color::BLACK.with_alpha(0.2).into(),
             ..Default::default()
         })
         .insert(StateScoped(Screen::Playing))
