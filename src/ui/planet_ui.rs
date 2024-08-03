@@ -21,7 +21,7 @@ pub struct ResourceHolderLabel;
 fn spawn_ui(
     mut commands: Commands,
     existing_ui_query: Query<(Entity, &PlanetUI)>,
-    selected_query: Query<(&PickSelection, Entity), With<PickSelection>>,
+    selected_query: Query<(&PickSelection, Entity), With<PlanetResources>>,
 ) {
     if let Some((_, entity)) = selected_query
         .iter()
@@ -46,7 +46,7 @@ fn spawn_ui(
                             TextBundle::from_section(
                                 "Planet Name",
                                 TextStyle {
-                                    font_size: 20.,
+                                    font_size: 30.,
                                     ..Default::default()
                                 },
                             ),
@@ -54,14 +54,23 @@ fn spawn_ui(
                         ));
                     })
                     .style()
-                    .top(Val::Percent(5.))
                     .justify_content(JustifyContent::Center);
                 // This is the one that's going to hold all the resources
                 column
                     .row(|row| {
-                        row.insert(ResourceHolderLabel);
+                        row.spawn((
+                            NodeBundle {
+                                style: Style {
+                                    display: Display::Grid,
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            },
+                            ResourceHolderLabel,
+                        ));
                     })
                     .style()
+                    .width(Val::Percent(100.))
                     .justify_content(JustifyContent::Center);
             })
             .insert((PlanetUI(entity), StateScoped(Screen::Playing)))
@@ -99,34 +108,85 @@ fn update_ui(
             if let Some(mut holder_commands) = commands.get_entity(holder) {
                 holder_commands.despawn_descendants(); // TODO: Consider using a more efficient aproach in
                                                        // future instead of recreating it every frame
-                let mut holder = commands.ui_builder(holder);
-                for resource in &planet_resources.0 {
-                    let (consumed, available, unlockable) = resource.get_ratios(&techs);
-                    let name = resource.name().to_string();
-                    holder.row(|type_row| {
-                        type_row.label(LabelConfig::from(name));
-                    });
-                    holder.row(|bar_row| {
-                        bar_row
-                            .column(|_| {})
+                let mut holder = commands.ui_builder(holder).column(|column| {
+                    for resource in &planet_resources.0 {
+                        let (consumed, available, unlockable) = resource.get_ratios(&techs);
+                        let name = resource.name().to_string();
+                        column
+                            .row(|type_row| {
+                                type_row.spawn(TextBundle::from_section(
+                                    name,
+                                    TextStyle {
+                                        font_size: 20.,
+                                        ..Default::default()
+                                    },
+                                ));
+                            })
                             .style()
-                            .height(Val::Percent(1.))
-                            .width(Val::Percent(consumed * 100.))
-                            .background_color(Color::srgb(1., 0., 0.));
-                        bar_row
-                            .column(|_| {})
+                            .top(Val::Percent(15.));
+                        column
+                            .row(|bar_row| {
+                                bar_row
+                                    .column(|col| {
+                                        col.spawn(NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.),
+                                                height: Val::Percent(100.),
+                                                min_height: Val::Px(10.),
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(1., 0., 0.).into(),
+                                            ..Default::default()
+                                        });
+                                        col.label(LabelConfig::from(" "));
+                                    })
+                                    .style()
+                                    .height(Val::Percent(10.))
+                                    .width(Val::Percent(consumed * 100.))
+                                    .background_color(Color::srgb(1., 0., 0.));
+                                bar_row
+                                    .column(|col| {
+                                        col.spawn(NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.),
+                                                height: Val::Percent(100.),
+                                                min_height: Val::Px(10.),
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(0., 1., 0.).into(),
+                                            ..Default::default()
+                                        });
+                                        col.label(LabelConfig::from(" "));
+                                    })
+                                    .style()
+                                    .height(Val::Percent(10.))
+                                    .width(Val::Percent(available * 100.))
+                                    .background_color(Color::srgb(0., 1., 0.));
+                                bar_row
+                                    .column(|col| {
+                                        col.spawn(NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.),
+                                                height: Val::Percent(100.),
+                                                min_height: Val::Px(10.),
+                                                ..Default::default()
+                                            },
+                                            background_color: Color::srgb(0., 0., 1.).into(),
+                                            ..Default::default()
+                                        });
+                                        col.label(LabelConfig::from(" "));
+                                    })
+                                    .style()
+                                    .height(Val::Percent(10.))
+                                    .width(Val::Percent(unlockable * 100.))
+                                    .background_color(Color::srgb(0., 0., 1.));
+                            })
                             .style()
-                            .height(Val::Percent(1.))
-                            .width(Val::Percent(available * 100.))
-                            .background_color(Color::srgb(0., 1., 0.));
-                        bar_row
-                            .column(|_| {})
-                            .style()
-                            .height(Val::Percent(1.))
-                            .width(Val::Percent(unlockable * 100.))
-                            .background_color(Color::srgb(0., 0., 1.));
-                    });
-                }
+                            .top(Val::Percent(10.))
+                            .width(Val::Vw(10.))
+                            .border_color(Color::WHITE);
+                    }
+                });
             }
         }
     }
