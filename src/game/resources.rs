@@ -118,6 +118,29 @@ impl RawResource {
             (max_unlockable - current_unlocked) / max_unlockable,
         )
     }
+
+    pub fn get_ratios_text(&self, techs: &TechUnlocks) -> String {
+        let (consumed, available, unlockable) = self.get_ratios(techs);
+        let mut out = if consumed > 0. {
+            format!(
+                "{:.2}% Consumed | {:.2}% Available",
+                (consumed * 100.),
+                available * 100.
+            )
+        } else {
+            format!("{:.2}% Available", available * 100.)
+        };
+        if unlockable > 0. {
+            let tmp = format!("{:.2}% Unlockable", unlockable * 100.);
+            if out.is_empty() {
+                out = tmp;
+            } else {
+                out.push_str(" | ");
+                out.push_str(&tmp);
+            }
+        }
+        out
+    }
 }
 
 fn update_resource_text(
