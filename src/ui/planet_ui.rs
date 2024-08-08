@@ -62,6 +62,7 @@ fn spawn_ui(
                             NodeBundle {
                                 style: Style {
                                     display: Display::Grid,
+                                    height: Val::Percent(100.),
                                     ..Default::default()
                                 },
                                 ..Default::default()
@@ -70,6 +71,7 @@ fn spawn_ui(
                         ));
                     })
                     .style()
+                    .height(Val::Percent(100.))
                     .width(Val::Percent(100.))
                     .justify_content(JustifyContent::Center);
             })
@@ -116,108 +118,117 @@ fn update_ui(
         // Remove the previous UI elements. Not very efficient
         holder_commands.despawn_descendants(); // TODO: Consider using a more efficient aproach in
                                                // future instead of recreating it every frame
-        // Build new UI items for the Planet UI
+                                               // Build new UI items for the Planet UI
         commands.ui_builder(holder).column(|column| {
-            let mult = planet_resources.0.len() > 1;
+            let mut first = true;
             for resource in &planet_resources.0 {
+                if first {
+                    column
+                        .row(|spacer_row| {
+                            spacer_row.spawn(NodeBundle::default());
+                        })
+                        .style()
+                        .min_height(Val::Vh(2.5));
+                    first = false;
+                }
                 let (consumed, available, unlockable) = resource.get_ratios(&techs);
                 let name = resource.name().to_string();
                 // Display the resource name
-                column
-                    .row(|type_row| {
-                        type_row.spawn(TextBundle::from_section(
-                            name,
-                            TextStyle {
-                                font_size: 20.,
-                                ..Default::default()
-                            },
-                        ));
-                    })
-                    .style()
-                    .top(Val::Percent(10.));
+                column.row(|type_row| {
+                    type_row.spawn(TextBundle::from_section(
+                        name,
+                        TextStyle {
+                            font_size: 20.,
+                            ..Default::default()
+                        },
+                    ));
+                });
+
                 // Display text to acompany the progress bar
                 column
                     .row(|bar_text_row| {
                         bar_text_row.spawn(TextBundle::from_section(
                             resource.get_ratios_text(&techs),
                             TextStyle {
-                                font_size: 8.,
+                                font_size: 12.,
                                 ..Default::default()
                             },
                         ));
                     })
                     .style()
-                    .max_width(Val::Vw(12.))
-                    .top(Val::Percent(10.));
+                    .max_width(Val::Vw(12.));
                 // Display the progress-type bar showing avalibility
-                let mut bar = column.row(|bar_row| {
-                    let mut tmp = bar_row.column(|col| {
-                        col.spawn(NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.),
-                                height: Val::Percent(100.),
-                                min_height: Val::Px(10.),
+                column
+                    .row(|bar_row| {
+                        let mut tmp = bar_row.column(|col| {
+                            col.spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    min_height: Val::Px(10.),
+                                    ..Default::default()
+                                },
+                                background_color: Color::srgb(1., 0., 0.).into(),
                                 ..Default::default()
-                            },
-                            background_color: Color::srgb(1., 0., 0.).into(),
-                            ..Default::default()
+                            });
+                            col.label(LabelConfig::from(" "));
                         });
-                        col.label(LabelConfig::from(" "));
-                    });
-                    tmp.style()
-                        .height(Val::Percent(10.))
-                        .width(Val::Percent(consumed * 100.))
-                        .background_color(Color::srgb(1., 0., 0.));
-                    if consumed > 0. {
-                        tmp.style().min_width(Val::Px(1.));
-                    }
-                    tmp = bar_row.column(|col| {
-                        col.spawn(NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.),
-                                height: Val::Percent(100.),
-                                min_height: Val::Px(10.),
+                        tmp.style()
+                            .height(Val::Percent(100.))
+                            .width(Val::Percent(consumed * 100.));
+                        if consumed > 0. {
+                            tmp.style().min_width(Val::Px(1.));
+                        }
+                        tmp = bar_row.column(|col| {
+                            col.spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    min_height: Val::Px(10.),
+                                    ..Default::default()
+                                },
+                                background_color: Color::srgb(0., 1., 0.).into(),
                                 ..Default::default()
-                            },
-                            background_color: Color::srgb(0., 1., 0.).into(),
-                            ..Default::default()
+                            });
+                            col.label(LabelConfig::from(" "));
                         });
-                        col.label(LabelConfig::from(" "));
-                    });
-                    tmp.style()
-                        .height(Val::Percent(10.))
-                        .width(Val::Percent(available * 100.))
-                        .background_color(Color::srgb(0., 1., 0.));
-                    if available > 0. {
-                        tmp.style().min_width(Val::Px(1.));
-                    }
-                    tmp = bar_row.column(|col| {
-                        col.spawn(NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.),
-                                height: Val::Percent(100.),
-                                min_height: Val::Px(10.),
+                        tmp.style()
+                            .height(Val::Percent(100.))
+                            .width(Val::Percent(available * 100.));
+                        if available > 0. {
+                            tmp.style().min_width(Val::Px(1.));
+                        }
+                        tmp = bar_row.column(|col| {
+                            col.spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    min_height: Val::Px(10.),
+                                    ..Default::default()
+                                },
+                                background_color: Color::srgb(0., 0., 1.).into(),
                                 ..Default::default()
-                            },
-                            background_color: Color::srgb(0., 0., 1.).into(),
-                            ..Default::default()
+                            });
+                            col.label(LabelConfig::from(" "));
                         });
-                        col.label(LabelConfig::from(" "));
-                    });
-                    tmp.style()
-                        .height(Val::Percent(10.))
-                        .width(Val::Percent(unlockable * 100.))
-                        .background_color(Color::srgb(0., 0., 1.));
-                    if unlockable > 0. {
-                        tmp.style().min_width(Val::Px(1.));
-                    }
-                });
-                bar.style().border_color(Color::WHITE).width(Val::Vw(12.));
-                if mult {
-                    // If there's more than one resource then we need to push things
-                    // down further to make sure it all fits
-                    bar.style().top(Val::Percent(8.));
-                }
+                        tmp.style()
+                            .height(Val::Percent(100.))
+                            .width(Val::Percent(unlockable * 100.));
+                        if unlockable > 0. {
+                            tmp.style().min_width(Val::Px(1.));
+                        }
+                    })
+                    .style()
+                    .width(Val::Vw(12.))
+                    .height(Val::Percent(100.))
+                    .max_height(Val::Vh(2.5))
+                    .background_color(Color::WHITE.with_luminance(0.5));
+                column
+                    .row(|spacer_row| {
+                        spacer_row.spawn(NodeBundle::default());
+                    })
+                    .style()
+                    .min_height(Val::Vh(1.));
             }
         });
     }

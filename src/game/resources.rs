@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use bevy::prelude::*;
 
+use crate::format_number;
+
 use super::unlocks::{TechUnlocks, Technology};
 
 pub(super) fn plugin(app: &mut App) {
@@ -130,21 +132,18 @@ impl RawResource {
         let (consumed, available, unlockable) = self.get_ratios(techs);
         let mut out = if consumed > 0. {
             format!(
-                "{:.2}% Consumed | {:.2}% Available",
-                (consumed * 100.),
-                available * 100.
+                "{}% Consumed\n{}% Available",
+                format_number(consumed * 100.),
+                format_number(available * 100.)
             )
         } else {
-            format!("{:.2}% Available", available * 100.)
+            format!("{}% Available", format_number(available * 100.))
         };
         if unlockable > 0. {
-            let tmp = format!("{:.2}% Unlockable", unlockable * 100.);
-            if out.is_empty() {
-                out = tmp;
-            } else {
-                out.push_str(" | ");
-                out.push_str(&tmp);
-            }
+            out.push_str(&format!(
+                "\n{}% Unlockable",
+                format_number(unlockable * 100.)
+            ));
         }
         out
     }

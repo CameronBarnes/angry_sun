@@ -11,7 +11,6 @@ use crate::screen::Screen;
 
 use super::spawn::planets::PlanetShadow;
 
-
 #[derive(Component, Debug)]
 pub struct PlanetNameLabel;
 

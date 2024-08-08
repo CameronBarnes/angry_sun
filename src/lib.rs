@@ -136,3 +136,13 @@ fn spawn_camera(mut commands: Commands) {
         BloomSettings::default(),
     ));
 }
+
+#[must_use]
+pub fn format_number(number: f32) -> String {
+    // 0.001 is the error margin
+    if (number - number.floor()).abs() < 0.001 {
+        number.to_string()
+    } else {
+        format!("{number:.2}")
+    }
+}
