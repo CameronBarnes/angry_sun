@@ -11,6 +11,9 @@ bevy_pancam = "0.13"
 bevy_mod_picking = { version = "0.20", features = ["selection", "backend_raycast"], default-features = false }
 sickle_ui = "0.2"
 
+derive_more = { version = "1.0", features = ["display"] }
+convert_case = "0.6"
+
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [
     "max_level_debug",

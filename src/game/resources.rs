@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use bevy::prelude::*;
+use derive_more::derive::Display;
 
 use crate::format_number;
 
@@ -32,11 +33,21 @@ impl Display for RawResourceType {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum MiningType {
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Display)]
+pub enum StationType {
     Surface,
     Ocean,
     Orbit,
+}
+
+impl StationType {
+    pub const fn cost(self) -> (f32, f32) {
+        match self {
+            Self::Surface => (100., 150.),
+            Self::Ocean => (200., 200.),
+            Self::Orbit => (400., 50.),
+        }
+    }
 }
 
 #[derive(Debug, Component)]
@@ -57,14 +68,20 @@ pub struct PlanetResources(pub Vec<RawResource>);
 #[derive(Debug)]
 pub struct RawResource {
     resource_type: RawResourceType,
+    station_type: StationType,
     levels: Vec<(f32, Technology)>,
     consumed: f32,
 }
 
 impl RawResource {
-    pub const fn new(res_type: RawResourceType, levels: Vec<(f32, Technology)>) -> Self {
+    pub const fn new(
+        resource_type: RawResourceType,
+        station_type: StationType,
+        levels: Vec<(f32, Technology)>,
+    ) -> Self {
         Self {
-            resource_type: res_type,
+            resource_type,
+            station_type,
             levels,
             consumed: 0.,
         }
@@ -89,19 +106,23 @@ impl RawResource {
             .map(|(value, _tech)| *value)
     }
 
+    /// Returns the maximum unlockable resource amount from the last resource level
     fn get_last(&self) -> f32 {
         self.levels.last().expect("Minimum 1 level").0
     }
 
+    /// Returns the amount of this resource that has already been consumed
     pub const fn get_consumed(&self) -> f32 {
         self.consumed
     }
 
+    /// Returns the currently available resource to harvest
     pub fn get_available(&self, techs: &TechUnlocks) -> f32 {
         self.get_current(techs)
             .map_or(0., |available| available - self.consumed)
     }
 
+    /// Returns the next technology to unlock for this resource
     pub fn get_next(&self, techs: &TechUnlocks) -> Option<Technology> {
         for (_, tech) in &self.levels {
             if !techs.check(*tech) {
@@ -111,6 +132,7 @@ impl RawResource {
         None
     }
 
+    /// Increase the amount of this resource that has been consumed
     pub fn increment_consumed(&mut self, consumed: f32) {
         self.consumed += consumed;
     }
@@ -128,6 +150,8 @@ impl RawResource {
         )
     }
 
+    /// Returns formatted text displaying the percentages of resources consumed, available, and
+    /// unlockable
     pub fn get_ratios_text(&self, techs: &TechUnlocks) -> String {
         let (consumed, available, unlockable) = self.get_ratios(techs);
         let mut out = if consumed > 0. {
@@ -146,6 +170,21 @@ impl RawResource {
             ));
         }
         out
+    }
+
+    /// Returns the cost of building another harvester for this resource
+    pub fn cost(&self, techs: &TechUnlocks) -> (f32, f32) {
+        let mut cost = self.station_type.cost();
+        for (_, tech) in &self.levels {
+            if techs.check(*tech) {
+                let modifier = tech.cost_modifier();
+                cost.0 *= modifier;
+                cost.1 *= modifier;
+            } else {
+                break;
+            }
+        }
+        cost
     }
 }
 

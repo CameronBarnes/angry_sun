@@ -4,7 +4,7 @@ use bevy_mod_picking::prelude::PickSelection;
 use sickle_ui::{prelude::*, widgets::layout::column};
 
 use crate::{
-    game::{planets::PlanetNameLabel, resources::PlanetResources, unlocks::TechUnlocks},
+    game::{planets::PlanetNameLabel, resources::PlanetResources, unlocks::{TechUnlocks, Technology}},
     screen::Screen,
 };
 
@@ -36,13 +36,13 @@ fn spawn_ui(
             }
         }
 
-        info! {"Spawing UI!"};
+        info! {"Spawing Planet UI!"};
         commands
             .ui_builder(UiRoot)
             .column(|column| {
                 column
-                    .row(|row| {
-                        row.spawn((
+                    .row(|planet_name_row| {
+                        planet_name_row.spawn((
                             TextBundle::from_section(
                                 "Planet Name",
                                 TextStyle {
@@ -55,10 +55,17 @@ fn spawn_ui(
                     })
                     .style()
                     .justify_content(JustifyContent::Center);
+                // Just to provide some vertical space between the name and the resources
+                column
+                    .row(|spacer_row| {
+                        spacer_row.spawn(NodeBundle::default());
+                    })
+                    .style()
+                    .min_height(Val::Vh(2.5));
                 // This is the one that's going to hold all the resources
                 column
-                    .row(|row| {
-                        row.spawn((
+                    .row(|content_row| {
+                        content_row.spawn((
                             NodeBundle {
                                 style: Style {
                                     display: Display::Grid,
@@ -92,6 +99,7 @@ fn spawn_ui(
 }
 
 // FIXME: Resolve the too many lines issue by factoring this out
+// TODO: Probably consider creating a custom UI widget to handle this
 #[allow(clippy::too_many_lines)]
 fn update_ui(
     mut commands: Commands,
@@ -120,17 +128,7 @@ fn update_ui(
                                                // future instead of recreating it every frame
                                                // Build new UI items for the Planet UI
         commands.ui_builder(holder).column(|column| {
-            let mut first = true;
             for resource in &planet_resources.0 {
-                if first {
-                    column
-                        .row(|spacer_row| {
-                            spacer_row.spawn(NodeBundle::default());
-                        })
-                        .style()
-                        .min_height(Val::Vh(2.5));
-                    first = false;
-                }
                 let (consumed, available, unlockable) = resource.get_ratios(&techs);
                 let name = resource.name().to_string();
                 // Display the resource name
@@ -157,9 +155,11 @@ fn update_ui(
                     })
                     .style()
                     .max_width(Val::Vw(12.));
+
                 // Display the progress-type bar showing avalibility
                 column
                     .row(|bar_row| {
+                        // Column for consumed resources portion of the multi-progress bar
                         let mut tmp = bar_row.column(|col| {
                             col.spawn(NodeBundle {
                                 style: Style {
@@ -171,7 +171,6 @@ fn update_ui(
                                 background_color: Color::srgb(1., 0., 0.).into(),
                                 ..Default::default()
                             });
-                            col.label(LabelConfig::from(" "));
                         });
                         tmp.style()
                             .height(Val::Percent(100.))
@@ -179,6 +178,7 @@ fn update_ui(
                         if consumed > 0. {
                             tmp.style().min_width(Val::Px(1.));
                         }
+                        // Column for available resources portion of the multi-progress bar
                         tmp = bar_row.column(|col| {
                             col.spawn(NodeBundle {
                                 style: Style {
@@ -190,7 +190,6 @@ fn update_ui(
                                 background_color: Color::srgb(0., 1., 0.).into(),
                                 ..Default::default()
                             });
-                            col.label(LabelConfig::from(" "));
                         });
                         tmp.style()
                             .height(Val::Percent(100.))
@@ -198,6 +197,7 @@ fn update_ui(
                         if available > 0. {
                             tmp.style().min_width(Val::Px(1.));
                         }
+                        // Column for the unlockable resources portion of the multi-progress bar
                         tmp = bar_row.column(|col| {
                             col.spawn(NodeBundle {
                                 style: Style {
@@ -209,7 +209,6 @@ fn update_ui(
                                 background_color: Color::srgb(0., 0., 1.).into(),
                                 ..Default::default()
                             });
-                            col.label(LabelConfig::from(" "));
                         });
                         tmp.style()
                             .height(Val::Percent(100.))
@@ -221,8 +220,7 @@ fn update_ui(
                     .style()
                     .width(Val::Vw(12.))
                     .height(Val::Percent(100.))
-                    .max_height(Val::Vh(2.5))
-                    .background_color(Color::WHITE.with_luminance(0.5));
+                    .max_height(Val::Vh(5.));
                 column
                     .row(|spacer_row| {
                         spacer_row.spawn(NodeBundle::default());
