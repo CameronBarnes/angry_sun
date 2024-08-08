@@ -2,14 +2,14 @@ use std::fmt::Display;
 
 use bevy::prelude::*;
 
-use super::unlocks::TechUnlocks;
+use super::unlocks::{TechUnlocks, Technology};
 
 pub(super) fn plugin(app: &mut App) {
     app.insert_resource(HarvestedResources::default());
     app.add_systems(PreUpdate, update_resource_text);
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum RawResourceType {
     Metals,
     Silicate,
@@ -30,6 +30,13 @@ impl Display for RawResourceType {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum MiningType {
+    Surface,
+    Ocean,
+    Orbit,
+}
+
 #[derive(Debug, Component)]
 pub struct ResourceLabel(pub RawResourceType);
 
@@ -48,12 +55,12 @@ pub struct PlanetResources(pub Vec<RawResource>);
 #[derive(Debug)]
 pub struct RawResource {
     resource_type: RawResourceType,
-    levels: Vec<(f32, &'static str)>,
+    levels: Vec<(f32, Technology)>,
     consumed: f32,
 }
 
 impl RawResource {
-    pub const fn new(res_type: RawResourceType, levels: Vec<(f32, &'static str)>) -> Self {
+    pub const fn new(res_type: RawResourceType, levels: Vec<(f32, Technology)>) -> Self {
         Self {
             resource_type: res_type,
             levels,
@@ -75,7 +82,7 @@ impl RawResource {
         }
         self.levels
             .iter()
-            .filter(|(_value, tech)| techs.check(tech))
+            .filter(|(_value, tech)| techs.check(*tech))
             .last()
             .map(|(value, _tech)| *value)
     }
@@ -93,9 +100,9 @@ impl RawResource {
             .map_or(0., |available| available - self.consumed)
     }
 
-    pub fn get_next(&self, techs: &TechUnlocks) -> Option<&'static str> {
+    pub fn get_next(&self, techs: &TechUnlocks) -> Option<Technology> {
         for (_, tech) in &self.levels {
-            if !techs.check(tech) {
+            if !techs.check(*tech) {
                 return Some(*tech);
             }
         }

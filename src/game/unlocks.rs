@@ -4,9 +4,22 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(TechUnlocks::new());
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+pub enum Technology {
+    None,
+    DeepSeaMining,
+    DeepCrustMining,
+    ExtraTerrestrialMining,
+    HotSurfaceMining,
+    SeaWaterElectrolysis,
+    SurfaceMineralDecomposition,
+    GasGiantMining,
+    StellarLifting,
+}
+
 #[derive(Resource, Debug)]
 pub struct TechUnlocks {
-    techs: HashSet<&'static str>,
+    techs: HashSet<Technology>,
 }
 
 impl TechUnlocks {
@@ -14,17 +27,17 @@ impl TechUnlocks {
         let mut tmp = Self {
             techs: HashSet::default(),
         };
-        tmp.put("None");
+        tmp.put(Technology::None);
         tmp
     }
 }
 
 impl TechUnlocks {
-    pub fn check(&self, tech: &'static str) -> bool {
-        self.techs.contains(tech)
+    pub fn check(&self, tech: Technology) -> bool {
+        self.techs.contains(&tech)
     }
 
-    pub fn put(&mut self, tech: &'static str) {
+    pub fn put(&mut self, tech: Technology) {
         self.techs.insert(tech);
     }
 }

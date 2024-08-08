@@ -21,6 +21,7 @@ use crate::{
         planets::{Orbit, Planet, PlanetBundle},
         resources::{PlanetResources, RawResource, RawResourceType},
         sun::Sun,
+        unlocks::Technology,
     },
     screen::Screen,
 };
@@ -153,7 +154,7 @@ fn spawn_sun(
         FinishZoom::new_with_target(35.),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
-            vec![(0.71 * scale(1_400_000.), "Stellar Lifting")],
+            vec![(0.71 * scale(1_400_000.), Technology::StellarLifting)],
         )]),
         StateScoped(Screen::Playing),
     ));
@@ -186,15 +187,15 @@ fn spawn_mercury<A: Material2d>(
             RawResource::new(
                 RawResourceType::Metals,
                 vec![
-                    (0.07, "Extra-Terrestrial Mining"),
-                    (0.7, "Deep Crust Mining"),
+                    (0.07, Technology::ExtraTerrestrialMining),
+                    (0.7, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Silicate,
                 vec![
-                    (0.03, "Extra-Terrestrial Mining"),
-                    (0.3, "Deep Crust Mining"),
+                    (0.03, Technology::ExtraTerrestrialMining),
+                    (0.3, Technology::DeepCrustMining),
                 ],
             ),
         ]),
@@ -226,11 +227,17 @@ fn spawn_venus<A: Material2d>(
         PlanetResources(vec![
             RawResource::new(
                 RawResourceType::Metals,
-                vec![(0.05, "Hot Surface Mining"), (0.5, "Deep Crust Mining")],
+                vec![
+                    (0.05, Technology::HotSurfaceMining),
+                    (0.5, Technology::DeepCrustMining),
+                ],
             ),
             RawResource::new(
                 RawResourceType::Silicate,
-                vec![(0.015, "Hot Surface Mining"), (0.15, "Deep Crust Mining")],
+                vec![
+                    (0.015, Technology::HotSurfaceMining),
+                    (0.15, Technology::DeepCrustMining),
+                ],
             ),
         ]),
     );
@@ -262,22 +269,22 @@ fn spawn_earth<A: Material2d>(
             RawResource::new(
                 RawResourceType::Metals,
                 vec![
-                    (0.03, "Extra-Terrestrial Mining"),
-                    (0.3, "Deep Crust Mining"),
+                    (0.03, Technology::ExtraTerrestrialMining),
+                    (0.3, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Silicate,
                 vec![
-                    (0.02, "Extra-Terrestrial Mining"),
-                    (0.2, "Deep Crust Mining"),
+                    (0.02, Technology::ExtraTerrestrialMining),
+                    (0.2, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Oxygen,
                 vec![
-                    (0.043, "Surface Mineral Decomposition"),
-                    (0.43, "Deep Crust Mining"),
+                    (0.043, Technology::SurfaceMineralDecomposition),
+                    (0.43, Technology::DeepCrustMining),
                 ],
             ),
         ]),
@@ -301,26 +308,32 @@ fn spawn_earth<A: Material2d>(
             RawResource::new(
                 RawResourceType::Metals,
                 vec![
-                    (0.025, "None"),
-                    (0.05, "Deep Sea Mining"),
-                    (0.5, "Deep Crust Mining"),
+                    (0.025, Technology::None),
+                    (0.05, Technology::DeepSeaMining),
+                    (0.5, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Silicate,
                 vec![
-                    (0.00725, "None"),
-                    (0.015, "Deep Sea Mining"),
-                    (0.15, "Deep Crust Mining"),
+                    (0.00725, Technology::None),
+                    (0.015, Technology::DeepSeaMining),
+                    (0.15, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Oxygen,
-                vec![(0.003, "None"), (0.03, "Sea Water Electrolysis")],
+                vec![
+                    (0.003, Technology::None),
+                    (0.03, Technology::SeaWaterElectrolysis),
+                ],
             ),
             RawResource::new(
                 RawResourceType::Hydrogen,
-                vec![(0.0005, "None"), (0.03, "Sea Water Electrolysis")],
+                vec![
+                    (0.0005, Technology::None),
+                    (0.03, Technology::SeaWaterElectrolysis),
+                ],
             ),
         ]),
     );
@@ -352,22 +365,22 @@ fn spawn_mars<A: Material2d>(
             RawResource::new(
                 RawResourceType::Metals,
                 vec![
-                    (0.025, "Extra-Terrestrial Mining"),
-                    (0.25, "Deep Crust Mining"),
+                    (0.025, Technology::ExtraTerrestrialMining),
+                    (0.25, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Silicate,
                 vec![
-                    (0.023, "Extra-Terrestrial Mining"),
-                    (0.23, "Deep Crust Mining"),
+                    (0.023, Technology::ExtraTerrestrialMining),
+                    (0.23, Technology::DeepCrustMining),
                 ],
             ),
             RawResource::new(
                 RawResourceType::Oxygen,
                 vec![
-                    (0.043, "Surface Mineral Decomposition"),
-                    (0.43, "Deep Crust Mining"),
+                    (0.043, Technology::SurfaceMineralDecomposition),
+                    (0.43, Technology::DeepCrustMining),
                 ],
             ),
         ]),
@@ -399,7 +412,7 @@ fn spawn_jupiter<A: Material2d>(
         Some(0.3),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
-            vec![(0.9, "Gas Giant Mining")],
+            vec![(0.9, Technology::GasGiantMining)],
         )]),
     );
 }
@@ -429,7 +442,7 @@ fn spawn_saturn<A: Material2d>(
         Some(0.3),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
-            vec![(0.96, "Gas Giant Mining")],
+            vec![(0.96, Technology::GasGiantMining)],
         )]),
     );
 }
@@ -459,7 +472,7 @@ fn spawn_uranus<A: Material2d>(
         Some(0.6),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
-            vec![(0.83, "Gas Giant Mining")],
+            vec![(0.83, Technology::GasGiantMining)],
         )]),
     );
 }
@@ -489,7 +502,7 @@ fn spawn_neptune<A: Material2d>(
         Some(0.6),
         PlanetResources(vec![RawResource::new(
             RawResourceType::Hydrogen,
-            vec![(0.80, "Gas Giant Mining")],
+            vec![(0.80, Technology::GasGiantMining)],
         )]),
     );
 }
