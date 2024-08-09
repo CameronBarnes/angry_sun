@@ -5,7 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.14", features = ["mp3"] }
+bevy = { version = "0.14", features = ["wayland", "mp3"] }
 
 bevy_pancam = "0.13"
 bevy_mod_picking = { version = "0.20", features = ["selection", "backend_raycast"], default-features = false }

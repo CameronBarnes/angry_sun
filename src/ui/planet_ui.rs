@@ -13,6 +13,11 @@ use crate::{
     screen::Screen,
 };
 
+use super::{
+    palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, NODE_BACKGROUND},
+    prelude::InteractionPalette,
+};
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, (spawn_ui, update_ui).chain());
 }
@@ -131,6 +136,20 @@ fn update_ui(
         let Some(mut holder_commands) = commands.get_entity(holder) else {
             return; // FIXME: Throw some kind of error or warning here. This is a problem
         };
+
+        // Create button color component
+        let button_palette = InteractionPalette {
+            none: NODE_BACKGROUND,
+            hovered: BUTTON_HOVERED_BACKGROUND,
+            pressed: BUTTON_PRESSED_BACKGROUND,
+        };
+
+        let button_palette_disabled = InteractionPalette {
+            none: NODE_BACKGROUND.with_luminance(0.2),
+            hovered: BUTTON_HOVERED_BACKGROUND.with_luminance(0.15),
+            pressed: BUTTON_PRESSED_BACKGROUND.with_luminance(0.15),
+        };
+
         // Remove the previous UI elements. Not very efficient
         holder_commands.despawn_descendants(); // TODO: Consider using a more efficient aproach in
                                                // future instead of recreating it every frame
@@ -262,7 +281,30 @@ fn update_ui(
                         });
                     });
                     // Place buy button
-                    // TODO: Do this
+                    cost_buy_row.column(|button_col| {
+                        button_col
+                            .spawn((
+                                ButtonBundle {
+                                    style: Style {
+                                        justify_content: JustifyContent::Center,
+                                        ..Default::default()
+                                    },
+                                    background_color: button_palette.none.into(),
+                                    ..Default::default()
+                                },
+                                button_palette.clone(),
+                            ))
+                            .entity_commands()
+                            .with_children(|parent| {
+                                parent.spawn(TextBundle::from_section(
+                                    "Buy",
+                                    TextStyle {
+                                        font_size: 18.,
+                                        ..Default::default()
+                                    },
+                                ));
+                            });
+                    }).style().width(Val::Percent(100.)).justify_content(JustifyContent::Center);
                 });
                 column
                     .row(|spacer_row| {
