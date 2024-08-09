@@ -1,10 +1,15 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, reflect::List};
 use bevy_mod_picking::prelude::PickSelection;
 
 use sickle_ui::{prelude::*, widgets::layout::column};
 
 use crate::{
-    game::{planets::PlanetNameLabel, resources::PlanetResources, unlocks::{TechUnlocks, Technology}},
+    format_number,
+    game::{
+        planets::PlanetNameLabel,
+        resources::{BuiltHarvesters, PlanetResources},
+        unlocks::{TechUnlocks, Technology},
+    },
     screen::Screen,
 };
 
@@ -105,12 +110,15 @@ fn update_ui(
     mut commands: Commands,
     techs: Res<TechUnlocks>,
     mut name_text_query: Query<&mut Text, With<PlanetNameLabel>>,
-    selected_planet_query: Query<(&PickSelection, &Name, &PlanetResources), With<PickSelection>>,
+    selected_planet_query: Query<
+        (&PickSelection, &Name, &PlanetResources, &BuiltHarvesters),
+        With<PickSelection>,
+    >,
     resource_holder_query: Query<Entity, With<ResourceHolderLabel>>,
 ) {
-    if let Some((_, name, planet_resources)) = selected_planet_query
+    if let Some((_, name, planet_resources, planet_harvesters)) = selected_planet_query
         .iter()
-        .find(|(selection, _, _)| selection.is_selected)
+        .find(|(selection, _, _, _)| selection.is_selected)
     {
         // Update the planet name text
         if let Ok(mut text) = name_text_query.get_single_mut() {
@@ -221,6 +229,41 @@ fn update_ui(
                     .width(Val::Vw(12.))
                     .height(Val::Percent(100.))
                     .max_height(Val::Vh(5.));
+                // Cost and buy button
+                // TODO: Handle buying more than one
+                column.row(|cost_buy_row| {
+                    // Cost text
+                    cost_buy_row.column(|cost_col| {
+                        let mut cost = resource.cost(&techs);
+                        #[allow(clippy::cast_precision_loss)]
+                        let modifier = planet_harvesters
+                            .0
+                            .get(&resource.name())
+                            .map_or(1., |vec| 1. + (vec.len() as f32 / 1000.));
+                        cost.0 *= modifier;
+                        cost.1 *= modifier;
+                        cost_col.row(|metal_row| {
+                            metal_row.spawn(TextBundle::from_section(
+                                format!("{} Metal", format_number(cost.0)),
+                                TextStyle {
+                                    font_size: 10.,
+                                    ..Default::default()
+                                },
+                            ));
+                        });
+                        cost_col.row(|silicate_row| {
+                            silicate_row.spawn(TextBundle::from_section(
+                                format!("{} Silicate", format_number(cost.1)),
+                                TextStyle {
+                                    font_size: 10.,
+                                    ..Default::default()
+                                },
+                            ));
+                        });
+                    });
+                    // Place buy button
+                    // TODO: Do this
+                });
                 column
                     .row(|spacer_row| {
                         spacer_row.spawn(NodeBundle::default());

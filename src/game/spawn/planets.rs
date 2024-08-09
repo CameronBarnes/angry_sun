@@ -19,7 +19,7 @@ use crate::{
         camera::{ClearFinishZoomEvent, FinishZoom, ScaleWithZoom},
         highlight::{HighlightObject, LinkSelectionObject},
         planets::{Orbit, Planet, PlanetBundle},
-        resources::{PlanetResources, RawResource, RawResourceType, StationType},
+        resources::{BuiltHarvesters, PlanetResources, RawResource, RawResourceType, StationType},
         sun::Sun,
         unlocks::Technology,
     },
@@ -158,6 +158,7 @@ fn spawn_sun(
             vec![(0.71 * scale(1_400_000.), Technology::StellarLifting)],
         )]),
         StateScoped(Screen::Playing),
+        BuiltHarvesters::default(),
     ));
 }
 
@@ -573,6 +574,7 @@ fn spawn_planet<A: Material2d>(
             orbit: Orbit::circle(scaled_radius, orbital_period),
         },
         StateScoped(Screen::Playing),
+        BuiltHarvesters::default(),
         ScaleWithZoom {
             ratio: zoom_scale.unwrap_or(1.),
         },

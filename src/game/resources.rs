@@ -1,6 +1,4 @@
-use std::fmt::Display;
-
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use derive_more::derive::Display;
 
 use crate::format_number;
@@ -12,25 +10,13 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(PreUpdate, update_resource_text);
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Display)]
 pub enum RawResourceType {
     Metals,
     Silicate,
     Hydrogen,
     Oxygen,
     Power,
-}
-
-impl Display for RawResourceType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Metals => write!(f, "Metals"),
-            Self::Silicate => write!(f, "Silicate"),
-            Self::Hydrogen => write!(f, "Hydrogen"),
-            Self::Oxygen => write!(f, "Oxygen"),
-            Self::Power => write!(f, "Power"),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Display)]
@@ -175,11 +161,14 @@ impl RawResource {
     /// Returns the cost of building another harvester for this resource
     pub fn cost(&self, techs: &TechUnlocks) -> (f32, f32) {
         let mut cost = self.station_type.cost();
+        let mut first = true; // We need this because if the first tech is not unlocked then it'll
+                              // just show the base cost for that station type, which is wrong
         for (_, tech) in &self.levels {
-            if techs.check(*tech) {
+            if first || techs.check(*tech) {
                 let modifier = tech.cost_modifier();
                 cost.0 *= modifier;
                 cost.1 *= modifier;
+                first = false;
             } else {
                 break;
             }
@@ -188,17 +177,20 @@ impl RawResource {
     }
 }
 
+#[derive(Debug, Component, Default)]
+pub struct BuiltHarvesters(pub HashMap<RawResourceType, Vec<Entity>>);
+
 fn update_resource_text(
     resources: Res<HarvestedResources>,
     mut text_query: Query<(&mut Text, &ResourceLabel), With<ResourceLabel>>,
 ) {
     for (mut text, res_type) in &mut text_query {
         match res_type.0 {
-            RawResourceType::Metals => text.sections[0].value = resources.metals.to_string(),
-            RawResourceType::Silicate => text.sections[0].value = resources.silicate.to_string(),
-            RawResourceType::Hydrogen => text.sections[0].value = resources.hydrogen.to_string(),
-            RawResourceType::Oxygen => text.sections[0].value = resources.oxygen.to_string(),
-            RawResourceType::Power => text.sections[0].value = resources.power.to_string(),
+            RawResourceType::Metals => text.sections[0].value = format_number(resources.metals),
+            RawResourceType::Silicate => text.sections[0].value = format_number(resources.silicate),
+            RawResourceType::Hydrogen => text.sections[0].value = format_number(resources.hydrogen),
+            RawResourceType::Oxygen => text.sections[0].value = format_number(resources.oxygen),
+            RawResourceType::Power => text.sections[0].value = format_number(resources.power),
         }
     }
 }

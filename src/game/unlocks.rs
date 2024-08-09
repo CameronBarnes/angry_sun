@@ -28,7 +28,7 @@ impl Technology {
             Self::DeepCrustMining => 5.,
             Self::ExtraTerrestrialMining | Self::SeaWaterElectrolysis => 1.5,
             Self::HotSurfaceMining => 2.5,
-            Self::StellarLifting => 10_000.,
+            Self::StellarLifting => 2_000.,
         }
     }
 
@@ -55,6 +55,21 @@ impl Technology {
             Self::StellarLifting => vec![Self::GasGiantMining],
         }
     }
+
+    pub const fn cost(self) -> (f32, f32) {
+        match self {
+            Self::None => (0., 0.),
+            Self::Orbitals => (5_000., 300.),
+            Self::DeepSeaMining => (1_000., 500.),
+            Self::DeepCrustMining => (20_000., 20_000.),
+            Self::ExtraTerrestrialMining => (5_000., 2_000.),
+            Self::HotSurfaceMining => (5_000., 10_000.),
+            Self::SeaWaterElectrolysis => (2_000., 300.),
+            Self::SurfaceMineralDecomposition => (5_000., 500.),
+            Self::GasGiantMining => (30_000., 3_000.),
+            Self::StellarLifting => (200_000., 50_000.),
+        }
+    }
 }
 
 #[derive(Resource, Debug, Default)]
@@ -63,11 +78,26 @@ pub struct TechUnlocks {
 }
 
 impl TechUnlocks {
+    /// Returns true if the specified technology is currently unlocked
     pub fn check(&self, tech: Technology) -> bool {
         tech.is_none() || self.techs.contains(&tech)
     }
 
-    pub fn put(&mut self, tech: Technology) {
-        self.techs.insert(tech);
+    /// Returns true if the pre-requisite technologies for the provided tech are unlocked
+    pub fn can_unlock(&self, tech: Technology) -> bool {
+        tech.prerequisites()
+            .into_iter()
+            .all(|perquisite| self.check(perquisite))
+    }
+
+    /// Unlocks the provided technology if the prerequisites are met, returns a bool indicating
+    /// success
+    pub fn unlock(&mut self, tech: Technology) -> bool {
+        if self.can_unlock(tech) {
+            self.techs.insert(tech);
+            true
+        } else {
+            false
+        }
     }
 }
