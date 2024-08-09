@@ -37,48 +37,69 @@ impl MultiProgressBar {
             separated,
         }
     }
+
+    pub fn get_values_mut(&mut self) -> &mut [f32] {
+        &mut self.section_values
+    }
+
+    pub fn get_values(&self) -> &[f32] {
+        &self.section_values
+    }
+
+    pub fn get_colors_mut(&mut self) -> &mut [Color] {
+        &mut self.section_colors
+    }
+
+    pub fn get_colors(&self) -> &[Color] {
+        &self.section_colors
+    }
 }
 
 impl MultiProgressBar {
     #[allow(clippy::cast_precision_loss)]
-    pub fn spawn_with_colors(commands: EntityCommands, sections: Vec<Color>) {
+    pub fn spawn_with_colors(commands: EntityCommands, sections: Vec<Color>) -> Entity {
         let len = sections.len();
         let val = 100. / (len as f32);
-        Self::spawn(commands, (0..len).map(|_| val).zip(sections).collect());
+        Self::spawn(commands, (0..len).map(|_| val).zip(sections).collect())
     }
 
-    pub fn spawn(mut commands: EntityCommands, sections: Vec<(f32, Color)>) {
+    pub fn spawn(mut commands: EntityCommands, sections: Vec<(f32, Color)>) -> Entity {
+        let mut entity_out: Option<Entity> = None;
         commands.with_children(|parent| {
-            parent
-                .spawn((
-                    NodeBundle {
-                        style: Style {
-                            height: Val::Percent(100.),
-                            width: Val::Percent(100.),
-                            align_items: AlignItems::Center,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    },
-                    Self::new(sections.clone(), true),
-                ))
-                .with_children(|parent| {
-                    for (id, (width, color)) in sections.into_iter().enumerate() {
-                        parent.spawn((
-                            NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(width),
-                                    height: Val::Percent(100.),
-                                    ..Default::default()
-                                },
-                                background_color: color.into(),
+            entity_out = Some(
+                parent
+                    .spawn((
+                        NodeBundle {
+                            style: Style {
+                                height: Val::Percent(100.),
+                                width: Val::Percent(100.),
+                                align_items: AlignItems::Center,
                                 ..Default::default()
                             },
-                            MultiProgressBarSegment(id),
-                        ));
-                    }
-                });
+                            ..Default::default()
+                        },
+                        Self::new(sections.clone(), true),
+                    ))
+                    .with_children(|parent| {
+                        for (id, (width, color)) in sections.into_iter().enumerate() {
+                            parent.spawn((
+                                NodeBundle {
+                                    style: Style {
+                                        width: Val::Percent(width),
+                                        height: Val::Percent(100.),
+                                        ..Default::default()
+                                    },
+                                    background_color: color.into(),
+                                    ..Default::default()
+                                },
+                                MultiProgressBarSegment(id),
+                            ));
+                        }
+                    })
+                    .id(),
+            );
         });
+        entity_out.expect("Entity just created, unwrapping should be fine")
     }
 }
 

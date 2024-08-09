@@ -7,7 +7,7 @@ use crate::{
     format_number,
     game::{
         planets::PlanetNameLabel,
-        resources::{BuiltHarvesters, PlanetResources},
+        resources::{BuiltHarvesters, PlanetResourceLabel, PlanetResources},
         unlocks::{TechUnlocks, Technology},
     },
     screen::Screen,
@@ -117,14 +117,21 @@ fn update_ui(
     techs: Res<TechUnlocks>,
     mut name_text_query: Query<&mut Text, With<PlanetNameLabel>>,
     selected_planet_query: Query<
-        (&PickSelection, &Name, &PlanetResources, &BuiltHarvesters),
+        (
+            &PickSelection,
+            &Name,
+            &PlanetResources,
+            &BuiltHarvesters,
+            Entity,
+        ),
         With<PickSelection>,
     >,
     resource_holder_query: Query<Entity, With<ResourceHolderLabel>>,
 ) {
-    if let Some((_, name, planet_resources, planet_harvesters)) = selected_planet_query
-        .iter()
-        .find(|(selection, _, _, _)| selection.is_selected)
+    if let Some((_, name, planet_resources, planet_harvesters, planet_entity)) =
+        selected_planet_query
+            .iter()
+            .find(|(selection, _, _, _, _)| selection.is_selected)
     {
         // Update the planet name text
         if let Ok(mut text) = name_text_query.get_single_mut() {
@@ -187,7 +194,7 @@ fn update_ui(
                 // Display the progress-type bar showing avalibility
                 column
                     .row(|bar_row| {
-                        MultiProgressBar::spawn(
+                        let tmp = MultiProgressBar::spawn(
                             bar_row.entity_commands(),
                             vec![
                                 (consumed * 100., Color::srgb(1., 0., 0.)),
@@ -195,6 +202,11 @@ fn update_ui(
                                 (unlockable * 100., Color::srgb(0., 0., 1.)),
                             ],
                         );
+                        bar_row
+                            .commands()
+                            .get_entity(tmp)
+                            .expect("Just created, should be valid")
+                            .insert(PlanetResourceLabel(planet_entity, resource.name()));
                     })
                     .style()
                     .width(Val::Vw(15.))

@@ -1,13 +1,16 @@
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::derive::Display;
 
-use crate::format_number;
+use crate::{format_number, ui::multi_progress_bar::MultiProgressBar};
 
 use super::unlocks::{TechUnlocks, Technology};
 
 pub(super) fn plugin(app: &mut App) {
     app.insert_resource(HarvestedResources::default());
-    app.add_systems(PreUpdate, update_resource_text);
+    app.add_systems(
+        PreUpdate,
+        (update_resource_text, update_planet_ui_resource_bar),
+    );
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Display)]
@@ -36,8 +39,14 @@ impl StationType {
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Clone, Copy, Eq, PartialEq)]
 pub struct ResourceLabel(pub RawResourceType);
+
+#[derive(Debug, Component, Clone, PartialEq, Eq)]
+pub struct PlanetResourceLabel(pub Entity, pub RawResourceType);
+
+#[derive(Debug, Component, Clone, PartialEq, Eq)]
+pub struct ResourceCostLabel(pub RawResourceType);
 
 #[derive(Resource, Debug, Default)]
 pub struct HarvestedResources {
@@ -48,10 +57,10 @@ pub struct HarvestedResources {
     pub power: f32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct PlanetResources(pub Vec<RawResource>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RawResource {
     resource_type: RawResourceType,
     station_type: StationType,
@@ -191,6 +200,28 @@ fn update_resource_text(
             RawResourceType::Hydrogen => text.sections[0].value = format_number(resources.hydrogen),
             RawResourceType::Oxygen => text.sections[0].value = format_number(resources.oxygen),
             RawResourceType::Power => text.sections[0].value = format_number(resources.power),
+        }
+    }
+}
+
+fn update_planet_ui_resource_bar(
+    tech: Res<TechUnlocks>,
+    planet_query: Query<&PlanetResources>,
+    mut bar_query: Query<(&mut MultiProgressBar, &PlanetResourceLabel)>,
+) {
+    for (mut bar, label) in &mut bar_query {
+        if let Ok(resources) = planet_query.get(label.0) {
+            if let Some(resource) = resources
+                .0
+                .iter()
+                .find(|resource| resource.name() == label.1)
+            {
+                let (consumed, available, unlockable) = resource.get_ratios(&tech);
+                let vals = bar.get_values_mut();
+                vals[0] = consumed * 100.;
+                vals[1] = available * 100.;
+                vals[2] = unlockable * 100.;
+            }
         }
     }
 }
