@@ -4,6 +4,7 @@
 #![allow(dead_code, unused_imports)]
 
 pub mod interaction;
+pub mod multi_progress_bar;
 pub mod palette;
 pub mod planet_ui;
 pub mod resource_ui;
@@ -20,5 +21,10 @@ pub mod prelude {
 use bevy::prelude::*;
 
 pub fn plugin(app: &mut App) {
-    app.add_plugins((interaction::plugin, planet_ui::plugin, resource_ui::plugin));
+    app.add_plugins((
+        interaction::plugin,
+        planet_ui::plugin,
+        resource_ui::plugin,
+        multi_progress_bar::plugin,
+    ));
 }

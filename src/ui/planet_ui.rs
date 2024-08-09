@@ -14,6 +14,7 @@ use crate::{
 };
 
 use super::{
+    multi_progress_bar::MultiProgressBar,
     palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, NODE_BACKGROUND},
     prelude::InteractionPalette,
 };
@@ -186,66 +187,17 @@ fn update_ui(
                 // Display the progress-type bar showing avalibility
                 column
                     .row(|bar_row| {
-                        // Column for consumed resources portion of the multi-progress bar
-                        let mut tmp = bar_row.column(|col| {
-                            col.spawn(NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.),
-                                    height: Val::Percent(100.),
-                                    min_height: Val::Px(10.),
-                                    ..Default::default()
-                                },
-                                background_color: Color::srgb(1., 0., 0.).into(),
-                                ..Default::default()
-                            });
-                        });
-                        tmp.style()
-                            .height(Val::Percent(100.))
-                            .width(Val::Percent(consumed * 100.));
-                        if consumed > 0. {
-                            tmp.style().min_width(Val::Px(1.));
-                        }
-                        // Column for available resources portion of the multi-progress bar
-                        tmp = bar_row.column(|col| {
-                            col.spawn(NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.),
-                                    height: Val::Percent(100.),
-                                    min_height: Val::Px(10.),
-                                    ..Default::default()
-                                },
-                                background_color: Color::srgb(0., 1., 0.).into(),
-                                ..Default::default()
-                            });
-                        });
-                        tmp.style()
-                            .height(Val::Percent(100.))
-                            .width(Val::Percent(available * 100.));
-                        if available > 0. {
-                            tmp.style().min_width(Val::Px(1.));
-                        }
-                        // Column for the unlockable resources portion of the multi-progress bar
-                        tmp = bar_row.column(|col| {
-                            col.spawn(NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.),
-                                    height: Val::Percent(100.),
-                                    min_height: Val::Px(10.),
-                                    ..Default::default()
-                                },
-                                background_color: Color::srgb(0., 0., 1.).into(),
-                                ..Default::default()
-                            });
-                        });
-                        tmp.style()
-                            .height(Val::Percent(100.))
-                            .width(Val::Percent(unlockable * 100.));
-                        if unlockable > 0. {
-                            tmp.style().min_width(Val::Px(1.));
-                        }
+                        MultiProgressBar::spawn(
+                            bar_row.entity_commands(),
+                            vec![
+                                (consumed * 100., Color::srgb(1., 0., 0.)),
+                                (available * 100., Color::srgb(0., 1., 0.)),
+                                (unlockable * 100., Color::srgb(0., 0., 1.)),
+                            ],
+                        );
                     })
                     .style()
-                    .width(Val::Vw(12.))
+                    .width(Val::Vw(15.))
                     .height(Val::Percent(100.))
                     .max_height(Val::Vh(5.));
                 // Cost and buy button
@@ -281,30 +233,34 @@ fn update_ui(
                         });
                     });
                     // Place buy button
-                    cost_buy_row.column(|button_col| {
-                        button_col
-                            .spawn((
-                                ButtonBundle {
-                                    style: Style {
-                                        justify_content: JustifyContent::Center,
+                    cost_buy_row
+                        .column(|button_col| {
+                            button_col
+                                .spawn((
+                                    ButtonBundle {
+                                        style: Style {
+                                            justify_content: JustifyContent::Center,
+                                            ..Default::default()
+                                        },
+                                        background_color: button_palette.none.into(),
                                         ..Default::default()
                                     },
-                                    background_color: button_palette.none.into(),
-                                    ..Default::default()
-                                },
-                                button_palette.clone(),
-                            ))
-                            .entity_commands()
-                            .with_children(|parent| {
-                                parent.spawn(TextBundle::from_section(
-                                    "Buy",
-                                    TextStyle {
-                                        font_size: 18.,
-                                        ..Default::default()
-                                    },
-                                ));
-                            });
-                    }).style().width(Val::Percent(100.)).justify_content(JustifyContent::Center);
+                                    button_palette.clone(),
+                                ))
+                                .entity_commands()
+                                .with_children(|parent| {
+                                    parent.spawn(TextBundle::from_section(
+                                        "Buy",
+                                        TextStyle {
+                                            font_size: 18.,
+                                            ..Default::default()
+                                        },
+                                    ));
+                                });
+                        })
+                        .style()
+                        .width(Val::Percent(100.))
+                        .justify_content(JustifyContent::Center);
                 });
                 column
                     .row(|spacer_row| {
