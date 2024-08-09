@@ -9,7 +9,12 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(HarvestedResources::default());
     app.add_systems(
         PreUpdate,
-        (update_resource_text, update_planet_ui_resource_bar),
+        (
+            update_resource_text,
+            update_planet_ui_resource_bar,
+            update_planet_resource_buy_cost_labels,
+            update_resource_bar_text_label,
+        ),
     );
 }
 
@@ -44,6 +49,9 @@ pub struct ResourceLabel(pub RawResourceType);
 
 #[derive(Debug, Component, Clone, PartialEq, Eq)]
 pub struct PlanetResourceLabel(pub Entity, pub RawResourceType);
+
+#[derive(Debug, Component, Clone, Copy, Eq, PartialEq)]
+pub struct ResourceBarTextLabel;
 
 #[derive(Debug, Component, Clone, PartialEq, Eq)]
 pub struct ResourceCostLabel(pub RawResourceType);
@@ -204,7 +212,7 @@ fn update_resource_text(
     }
 }
 
-fn update_planet_ui_resource_bar(
+pub fn update_planet_ui_resource_bar(
     tech: Res<TechUnlocks>,
     planet_query: Query<&PlanetResources>,
     mut bar_query: Query<(&mut MultiProgressBar, &PlanetResourceLabel)>,
@@ -221,6 +229,54 @@ fn update_planet_ui_resource_bar(
                 vals[0] = consumed * 100.;
                 vals[1] = available * 100.;
                 vals[2] = unlockable * 100.;
+            }
+        }
+    }
+}
+
+fn update_resource_bar_text_label(
+    tech: Res<TechUnlocks>,
+    planet_query: Query<&PlanetResources>,
+    mut label_query: Query<(&mut Text, &PlanetResourceLabel), With<ResourceBarTextLabel>>,
+) {
+    for (mut text, planet_res) in &mut label_query {
+        if let Ok(resources) = planet_query.get(planet_res.0) {
+            if let Some(resource) = resources
+                .0
+                .iter()
+                .find(|resource| resource.name() == planet_res.1)
+            {
+                text.sections[0].value = resource.get_ratios_text(&tech);
+            }
+        }
+    }
+}
+
+fn update_planet_resource_buy_cost_labels(
+    tech: Res<TechUnlocks>,
+    planet_query: Query<(&PlanetResources, &BuiltHarvesters)>,
+    mut label_query: Query<(&mut Text, &PlanetResourceLabel, &ResourceCostLabel)>,
+) {
+    for (mut text, planet_res, cost_type) in &mut label_query {
+        if let Ok((resources, harvesters)) = planet_query.get(planet_res.0) {
+            if let Some(resource) = resources
+                .0
+                .iter()
+                .find(|resource| resource.name() == planet_res.1)
+            {
+                let mut cost = resource.cost(&tech);
+                #[allow(clippy::cast_precision_loss)]
+                let modifier = harvesters
+                    .0
+                    .get(&resource.name())
+                    .map_or(1., |vec| 1. + (vec.len() as f32 / 1000.));
+                cost.0 *= modifier;
+                cost.1 *= modifier;
+                match cost_type.0 {
+                    RawResourceType::Metals => text.sections[0].value = format_number(cost.0),
+                    RawResourceType::Silicate => text.sections[0].value = format_number(cost.1),
+                    _ => unimplemented!(),
+                }
             }
         }
     }
