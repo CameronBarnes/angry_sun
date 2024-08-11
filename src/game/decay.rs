@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
+use crate::screen::Screen;
+
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(PreUpdate, clear_decay);
-    app.add_systems(Update, update_decay);
+    app.add_systems(PreUpdate, clear_decay.run_if(in_state(Screen::Playing)));
+    app.add_systems(Update, update_decay.run_if(in_state(Screen::Playing)));
 }
 
 #[derive(Component, Debug)]

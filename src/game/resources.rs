@@ -1,9 +1,13 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{math::VectorSpace, prelude::*, utils::HashMap};
 use derive_more::derive::Display;
 
-use crate::{format_number, ui::multi_progress_bar::MultiProgressBar};
+use crate::{format_number, screen::Screen, ui::multi_progress_bar::MultiProgressBar};
 
-use super::unlocks::{TechUnlocks, Technology};
+use super::{
+    spawn::planets::ONE_AU,
+    sun::Sun,
+    unlocks::{TechUnlocks, Technology},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.insert_resource(HarvestedResources::default());
@@ -15,6 +19,12 @@ pub(super) fn plugin(app: &mut App) {
             update_planet_resource_buy_cost_labels,
             update_resource_bar_text_label,
         ),
+    );
+    app.add_systems(
+        Update,
+        (consuming_structures, producing_structures)
+            .chain()
+            .run_if(in_state(Screen::Playing)),
     );
 }
 
@@ -65,8 +75,36 @@ pub struct HarvestedResources {
     pub power: f32,
 }
 
+impl HarvestedResources {
+    pub const fn get(&self, res_type: RawResourceType) -> f32 {
+        match res_type {
+            RawResourceType::Metals => self.metals,
+            RawResourceType::Silicate => self.silicate,
+            RawResourceType::Hydrogen => self.hydrogen,
+            RawResourceType::Oxygen => self.oxygen,
+            RawResourceType::Power => self.power,
+        }
+    }
+
+    pub fn get_mut(&mut self, res_type: RawResourceType) -> &mut f32 {
+        match res_type {
+            RawResourceType::Metals => &mut self.metals,
+            RawResourceType::Silicate => &mut self.silicate,
+            RawResourceType::Hydrogen => &mut self.hydrogen,
+            RawResourceType::Oxygen => &mut self.oxygen,
+            RawResourceType::Power => &mut self.power,
+        }
+    }
+}
+
 #[derive(Component, Debug, Clone)]
 pub struct PlanetResources(pub Vec<RawResource>);
+
+impl PlanetResources {
+    pub fn apply_scale(&mut self, size: f32) {
+        self.0.iter_mut().for_each(|res| res.apply_scale(size));
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct RawResource {
@@ -90,10 +128,12 @@ impl RawResource {
         }
     }
 
+    /// Return the `RawResourceType`
     pub const fn name(&self) -> RawResourceType {
         self.resource_type
     }
 
+    /// Scale the provided percentage values from creation (0.0-1.0) with the planet size
     pub fn apply_scale(&mut self, size: f32) {
         self.levels.iter_mut().for_each(|pair| pair.0 *= size);
     }
@@ -122,7 +162,7 @@ impl RawResource {
     /// Returns the currently available resource to harvest
     pub fn get_available(&self, techs: &TechUnlocks) -> f32 {
         self.get_current(techs)
-            .map_or(0., |available| available - self.consumed)
+            .map_or(0., |available| available - self.get_consumed())
     }
 
     /// Returns the next technology to unlock for this resource
@@ -194,24 +234,191 @@ impl RawResource {
     }
 }
 
+#[derive(Debug, Component)]
+pub struct ProducingStructure {
+    pub planet: Option<Entity>,
+    pub res_type: RawResourceType,
+    pub produced: f32,
+    pub sun_buff: f32,
+}
+
+#[allow(clippy::cast_precision_loss)]
+pub fn cost_calculator(cost: f32, number: usize, mult: f32) -> f32 {
+    cost * mult.powf(number as f32)
+}
+
 #[derive(Debug, Component, Default)]
 pub struct BuiltHarvesters(pub HashMap<RawResourceType, Vec<Entity>>);
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EnabledStructure(pub bool);
+
+trait Requirement {
+    fn check(&self, resources: &HarvestedResources) -> bool;
+    fn consume(&self, resources: &mut HarvestedResources) -> bool;
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct PoweredStructure(pub f32);
+
+impl Requirement for PoweredStructure {
+    fn check(&self, resources: &HarvestedResources) -> bool {
+        resources.power >= self.0
+    }
+
+    fn consume(&self, resources: &mut HarvestedResources) -> bool {
+        if self.check(resources) {
+            resources.power -= self.0;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct ConsumingStructure(pub Vec<(f32, RawResourceType)>);
+
+impl Requirement for ConsumingStructure {
+    fn check(&self, resources: &HarvestedResources) -> bool {
+        for (amount, resource) in &self.0 {
+            if resources.get(*resource) < *amount {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn consume(&self, resources: &mut HarvestedResources) -> bool {
+        if self.check(resources) {
+            for (amount, resource) in &self.0 {
+                *resources.get_mut(*resource) -= *amount;
+            }
+            true
+        } else {
+            false
+        }
+    }
+}
+
+fn consuming_structures(
+    tech: Res<TechUnlocks>,
+    sun: Query<&Sun>,
+    planet_resources_query: Query<&PlanetResources>,
+    mut resources: ResMut<HarvestedResources>,
+    mut structure_query: Query<(
+        Option<&PoweredStructure>,
+        Option<&ConsumingStructure>,
+        Option<&ProducingStructure>,
+        &mut EnabledStructure,
+        &GlobalTransform,
+    )>,
+) {
+    let Ok(sun) = sun.get_single() else {
+        return; // TODO: Probably return an error here
+    };
+
+    for (power, consumed_res, producing, mut enabled, transform) in &mut structure_query {
+        let has_resource = producing.map_or(true, |producing| {
+            producing
+                .planet
+                .and_then(|entity| planet_resources_query.get(entity).ok())
+                .map_or_else(
+                    || true,
+                    |resources| {
+                        let produced = if producing.sun_buff == 0. {
+                            producing.produced
+                        } else {
+                            producing.produced
+                                * ((producing.sun_buff * sun.power_scale())
+                                    / (transform.translation().distance(Vec3::ZERO) / *ONE_AU))
+                        };
+                        resources
+                            .0
+                            .iter()
+                            .find(|res| res.name() == producing.res_type)
+                            .map_or(true, |res| res.get_available(&tech) >= produced)
+                    },
+                )
+        });
+        if power.is_some() || consumed_res.is_some() {
+            if has_resource
+                && power.map_or(true, |power| power.check(&resources))
+                && consumed_res.map_or(true, |consumed| consumed.check(&resources))
+            {
+                if let Some(power) = power {
+                    power.consume(&mut resources);
+                }
+                if let Some(consumed_res) = consumed_res {
+                    consumed_res.consume(&mut resources);
+                }
+                enabled.0 = true;
+            } else {
+                enabled.0 = false;
+            }
+        } else {
+            panic!("EnabledStructure does not have PoweredStructure or ConsumingStructure. One of the two is required.");
+        }
+    }
+}
+
+fn producing_structures(
+    tech: Res<TechUnlocks>,
+    sun: Query<&Sun>,
+    mut resources: ResMut<HarvestedResources>,
+    structure_query: Query<(
+        Option<&EnabledStructure>,
+        &ProducingStructure,
+        &GlobalTransform,
+    )>,
+    mut planet_resources_query: Query<&mut PlanetResources>,
+) {
+    let Ok(sun) = sun.get_single() else {
+        return; // TODO: Probably throw an error here
+    };
+
+    for (_, producing, transform) in structure_query
+        .iter()
+        .filter(|(enabled, _, _)| enabled.map_or(true, |enabled| enabled.0))
+    {
+        let produced = if producing.sun_buff == 0. {
+            producing.produced
+        } else {
+            producing.produced
+                * ((producing.sun_buff * sun.power_scale())
+                    / (transform.translation().distance(Vec3::ZERO) / *ONE_AU))
+        };
+        if let Some(mut planet_res) = producing
+            .planet
+            .and_then(|entity| planet_resources_query.get_mut(entity).ok())
+        {
+            if let Some(res) = planet_res
+                .0
+                .iter_mut()
+                .find(|res| res.name() == producing.res_type)
+            {
+                if res.get_available(&tech) >= produced {
+                    res.increment_consumed(produced);
+                }
+            }
+        }
+        *resources.get_mut(producing.res_type) += produced;
+    }
+}
+
+// UI stuff bellow here
+
+/// Update the Resource bar at the top of the screen
 fn update_resource_text(
     resources: Res<HarvestedResources>,
     mut text_query: Query<(&mut Text, &ResourceLabel), With<ResourceLabel>>,
 ) {
     for (mut text, res_type) in &mut text_query {
-        match res_type.0 {
-            RawResourceType::Metals => text.sections[0].value = format_number(resources.metals),
-            RawResourceType::Silicate => text.sections[0].value = format_number(resources.silicate),
-            RawResourceType::Hydrogen => text.sections[0].value = format_number(resources.hydrogen),
-            RawResourceType::Oxygen => text.sections[0].value = format_number(resources.oxygen),
-            RawResourceType::Power => text.sections[0].value = format_number(resources.power),
-        }
+        text.sections[0].value = format_number(resources.get(res_type.0));
     }
 }
 
+/// Update the ``MultiProgressBar``'s for planet resources
 pub fn update_planet_ui_resource_bar(
     tech: Res<TechUnlocks>,
     planet_query: Query<&PlanetResources>,

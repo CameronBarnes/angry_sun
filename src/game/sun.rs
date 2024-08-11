@@ -8,7 +8,10 @@ use crate::screen::Screen;
 use super::flare::SpawnFlare;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(PreUpdate, update_sun_labels);
+    app.add_systems(
+        PreUpdate,
+        update_sun_labels.run_if(in_state(Screen::Playing)),
+    );
     app.add_systems(Update, (update_sun).run_if(in_state(Screen::Playing)));
 }
 

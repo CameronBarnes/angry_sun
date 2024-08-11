@@ -249,6 +249,8 @@ fn spawn_venus<A: Material2d>(
     );
 }
 
+pub static ONE_AU: LazyLock<f32> = LazyLock::new(|| scale(149_000_000. * RADIUS_SCALE));
+
 fn spawn_earth<A: Material2d>(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -303,7 +305,7 @@ fn spawn_earth<A: Material2d>(
         meshes,
         materials,
         Name::new("Earth"),
-        scale(149_000_000. * RADIUS_SCALE),
+        *ONE_AU,
         scale(12_756. * PLANET_SCALE),
         365.25,
         Color::srgb(79. / 255., 76. / 255., 176. / 255.),
@@ -544,10 +546,13 @@ fn spawn_planet<A: Material2d>(
     moon: bool,
     magnetic_field: bool,
     zoom_scale: Option<f32>,
-    resources: PlanetResources,
+    mut resources: PlanetResources,
 ) -> Vec<Entity> {
     let (border_width, highlight_circle, width_modifier) =
         if moon { (6., 1.6, 20.) } else { (60., 1.4, 5.) };
+
+    // Scale planet resources with planet size
+    resources.apply_scale(scaled_size);
 
     // Spawn the planet
     let mut planet = commands.spawn((

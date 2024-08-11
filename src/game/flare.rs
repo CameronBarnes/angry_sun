@@ -42,7 +42,7 @@ struct FlareResources(Handle<Mesh>, Handle<ColorMaterial>);
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, build_flare_mesh);
     app.observe(spawn_flare);
-    app.add_systems(Update, update_flares);
+    app.add_systems(Update, update_flares.run_if(in_state(Screen::Playing)));
 }
 
 fn build_flare_mesh(

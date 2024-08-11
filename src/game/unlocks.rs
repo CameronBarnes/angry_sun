@@ -70,6 +70,14 @@ impl Technology {
             Self::StellarLifting => (200_000., 50_000.),
         }
     }
+
+    pub fn teir(self) -> usize {
+        self.prerequisites()
+            .into_iter()
+            .map(Self::teir)
+            .max()
+            .map_or(0, |prev| prev + 1)
+    }
 }
 
 #[derive(Resource, Debug, Default)]

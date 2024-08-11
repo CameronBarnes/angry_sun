@@ -3,6 +3,7 @@ use bevy::{
     prelude::*,
     reflect::List,
 };
+use bevy_mod_picking::prelude::NoDeselect;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, update_bars);
@@ -79,6 +80,7 @@ impl MultiProgressBar {
                             ..Default::default()
                         },
                         Self::new(sections.clone(), true),
+                        NoDeselect,
                     ))
                     .with_children(|parent| {
                         for (id, (width, color)) in sections.into_iter().enumerate() {
@@ -93,6 +95,7 @@ impl MultiProgressBar {
                                     ..Default::default()
                                 },
                                 MultiProgressBarSegment(id),
+                                NoDeselect,
                             ));
                         }
                     })

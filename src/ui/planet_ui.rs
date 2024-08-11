@@ -28,7 +28,8 @@ pub(super) fn plugin(app: &mut App) {
         PreUpdate,
         (spawn_ui, update_ui_name)
             .chain()
-            .before(update_planet_ui_resource_bar),
+            .before(update_planet_ui_resource_bar)
+            .run_if(in_state(Screen::Playing)),
     );
 }
 
@@ -87,6 +88,7 @@ fn spawn_ui(
                                 },
                             ),
                             PlanetNameLabel,
+                            NoDeselect,
                         ));
                     })
                     .style()
@@ -105,12 +107,15 @@ fn spawn_ui(
                             for resource in &planet_resources.0 {
                                 // Display the resource name
                                 column.row(|type_row| {
-                                    type_row.spawn(TextBundle::from_section(
-                                        resource.name().to_string(),
-                                        TextStyle {
-                                            font_size: 20.,
-                                            ..Default::default()
-                                        },
+                                    type_row.spawn((
+                                        TextBundle::from_section(
+                                            resource.name().to_string(),
+                                            TextStyle {
+                                                font_size: 20.,
+                                                ..Default::default()
+                                            },
+                                        ),
+                                        NoDeselect,
                                     ));
                                 });
 
@@ -147,9 +152,9 @@ fn spawn_ui(
                                             .commands()
                                             .get_entity(tmp)
                                             .expect("Just created, should be valid")
-                                            .insert(PlanetResourceLabel(
-                                                planet_entity,
-                                                resource.name(),
+                                            .insert((
+                                                PlanetResourceLabel(planet_entity, resource.name()),
+                                                NoDeselect,
                                             ));
                                     })
                                     .style()
@@ -176,15 +181,19 @@ fn spawn_ui(
                                                         resource.name(),
                                                     ),
                                                     ResourceCostLabel(RawResourceType::Metals),
+                                                    NoDeselect,
                                                 ));
                                             });
                                             metal_row.column(|static_label| {
-                                                static_label.spawn(TextBundle::from_section(
-                                                    "  Metal",
-                                                    TextStyle {
-                                                        font_size: 10.,
-                                                        ..Default::default()
-                                                    },
+                                                static_label.spawn((
+                                                    TextBundle::from_section(
+                                                        "  Metal",
+                                                        TextStyle {
+                                                            font_size: 10.,
+                                                            ..Default::default()
+                                                        },
+                                                    ),
+                                                    NoDeselect,
                                                 ));
                                             });
                                         });
@@ -203,15 +212,19 @@ fn spawn_ui(
                                                         resource.name(),
                                                     ),
                                                     ResourceCostLabel(RawResourceType::Silicate),
+                                                    NoDeselect,
                                                 ));
                                             });
                                             silicate_row.column(|static_label| {
-                                                static_label.spawn(TextBundle::from_section(
-                                                    "  Silicate",
-                                                    TextStyle {
-                                                        font_size: 10.,
-                                                        ..Default::default()
-                                                    },
+                                                static_label.spawn((
+                                                    TextBundle::from_section(
+                                                        "  Silicate",
+                                                        TextStyle {
+                                                            font_size: 10.,
+                                                            ..Default::default()
+                                                        },
+                                                    ),
+                                                    NoDeselect,
                                                 ));
                                             });
                                         });
@@ -236,18 +249,19 @@ fn spawn_ui(
                                                         planet_entity,
                                                         resource.name(),
                                                     ),
-                                                    // FIXME: We need to make planets stay
-                                                    // selected, figure out how to do that
-                                                    LinkSelectionObject(planet_entity),
+                                                    NoDeselect,
                                                 ))
                                                 .entity_commands()
                                                 .with_children(|parent| {
-                                                    parent.spawn(TextBundle::from_section(
-                                                        "Buy",
-                                                        TextStyle {
-                                                            font_size: 18.,
-                                                            ..Default::default()
-                                                        },
+                                                    parent.spawn((
+                                                        TextBundle::from_section(
+                                                            "Buy",
+                                                            TextStyle {
+                                                                font_size: 18.,
+                                                                ..Default::default()
+                                                            },
+                                                        ),
+                                                        NoDeselect,
                                                     ));
                                                 });
                                         })
