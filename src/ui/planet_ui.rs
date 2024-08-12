@@ -9,12 +9,15 @@ use crate::{
         highlight::LinkSelectionObject,
         planets::PlanetNameLabel,
         resources::{
-            update_planet_ui_resource_bar, BuiltHarvesters, PlanetResourceLabel, PlanetResources,
-            RawResourceType, ResourceBarTextLabel, ResourceCostLabel,
+            self, update_planet_ui_resource_bar, BuiltHarvesters, HarvestedResources,
+            PlanetResourceLabel, PlanetResources, RawResourceType, ResourceBarTextLabel,
+            ResourceCostLabel,
         },
+        sun::Sun,
         unlocks::{TechUnlocks, Technology},
     },
     screen::Screen,
+    ui::palette::BUTTON_PALETTE,
 };
 
 use super::{
@@ -26,7 +29,7 @@ use super::{
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
-        (spawn_ui, update_ui_name)
+        (spawn_ui, update_ui_name, update_buy_button)
             .chain()
             .before(update_planet_ui_resource_bar)
             .run_if(in_state(Screen::Playing)),
@@ -60,19 +63,6 @@ fn spawn_ui(
             }
         }
 
-        // Create button color component
-        let button_palette = InteractionPalette {
-            none: NODE_BACKGROUND,
-            hovered: BUTTON_HOVERED_BACKGROUND,
-            pressed: BUTTON_PRESSED_BACKGROUND,
-        };
-
-        let button_palette_disabled = InteractionPalette {
-            none: NODE_BACKGROUND.with_luminance(0.2),
-            hovered: BUTTON_HOVERED_BACKGROUND.with_luminance(0.15),
-            pressed: BUTTON_PRESSED_BACKGROUND.with_luminance(0.15),
-        };
-
         info! {"Spawing Planet UI!"};
         commands
             .ui_builder(UiRoot)
@@ -104,7 +94,7 @@ fn spawn_ui(
                 column
                     .row(|content_row| {
                         content_row.column(|column| {
-                            for resource in &planet_resources.0 {
+                            for resource in planet_resources.slice() {
                                 // Display the resource name
                                 column.row(|type_row| {
                                     type_row.spawn((
@@ -239,12 +229,13 @@ fn spawn_ui(
                                                             justify_content: JustifyContent::Center,
                                                             ..Default::default()
                                                         },
-                                                        background_color: button_palette
+                                                        background_color: BUTTON_PALETTE
+                                                            .clone()
                                                             .none
                                                             .into(),
                                                         ..Default::default()
                                                     },
-                                                    button_palette.clone(),
+                                                    BUTTON_PALETTE.clone(),
                                                     PlanetResourceLabel(
                                                         planet_entity,
                                                         resource.name(),
@@ -310,6 +301,20 @@ fn update_ui_name(
         // Update the planet name text
         if let Ok(mut text) = name_text_query.get_single_mut() {
             name.as_str().clone_into(&mut text.sections[0].value);
+        }
+    }
+}
+
+fn update_buy_button(
+    tech: Res<TechUnlocks>,
+    resources: Res<HarvestedResources>,
+    sun: Query<&Sun>,
+    planet_query: Query<(&PlanetResources, &BuiltHarvesters, &GlobalTransform)>,
+    mut button_query: Query<(&mut InteractionPalette, &PlanetResourceLabel)>,
+) {
+    for (mut pallete, label) in &mut button_query {
+        if let Ok((resources, harvesters, transform)) = planet_query.get(label.0) {
+            if let Some(resource) = resources.get(label.1) {}
         }
     }
 }

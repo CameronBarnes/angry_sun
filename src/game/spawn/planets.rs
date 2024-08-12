@@ -152,7 +152,7 @@ fn spawn_sun(
         ScaleWithZoom { ratio: 0.1 },
         PickableBundle::default(),
         FinishZoom::new_with_target(35.),
-        PlanetResources(vec![RawResource::new(
+        PlanetResources::new(vec![RawResource::new(
             RawResourceType::Hydrogen,
             StationType::Orbit,
             vec![(0.71 * scale(1_400_000.), Technology::StellarLifting)],
@@ -185,7 +185,7 @@ fn spawn_mercury<A: Material2d>(
         false,
         false,
         Some(2.5),
-        PlanetResources(vec![
+        PlanetResources::new(vec![
             RawResource::new(
                 RawResourceType::Metals,
                 StationType::Surface,
@@ -228,7 +228,7 @@ fn spawn_venus<A: Material2d>(
         false,
         false,
         None,
-        PlanetResources(vec![
+        PlanetResources::new(vec![
             RawResource::new(
                 RawResourceType::Metals,
                 StationType::Surface,
@@ -273,7 +273,7 @@ fn spawn_earth<A: Material2d>(
         true,
         false,
         Some(0.5),
-        PlanetResources(vec![
+        PlanetResources::new(vec![
             RawResource::new(
                 RawResourceType::Metals,
                 StationType::Surface,
@@ -315,7 +315,7 @@ fn spawn_earth<A: Material2d>(
         false,
         true,
         None,
-        PlanetResources(vec![
+        PlanetResources::new(vec![
             RawResource::new(
                 RawResourceType::Metals,
                 StationType::Surface,
@@ -376,7 +376,7 @@ fn spawn_mars<A: Material2d>(
         false,
         false,
         None,
-        PlanetResources(vec![
+        PlanetResources::new(vec![
             RawResource::new(
                 RawResourceType::Metals,
                 StationType::Surface,
@@ -428,7 +428,7 @@ fn spawn_jupiter<A: Material2d>(
         false,
         true,
         Some(0.3),
-        PlanetResources(vec![RawResource::new(
+        PlanetResources::new(vec![RawResource::new(
             RawResourceType::Hydrogen,
             StationType::Orbit,
             vec![(0.9, Technology::GasGiantMining)],
@@ -459,7 +459,7 @@ fn spawn_saturn<A: Material2d>(
         false,
         true,
         Some(0.3),
-        PlanetResources(vec![RawResource::new(
+        PlanetResources::new(vec![RawResource::new(
             RawResourceType::Hydrogen,
             StationType::Orbit,
             vec![(0.96, Technology::GasGiantMining)],
@@ -490,7 +490,7 @@ fn spawn_uranus<A: Material2d>(
         false,
         true,
         Some(0.6),
-        PlanetResources(vec![RawResource::new(
+        PlanetResources::new(vec![RawResource::new(
             RawResourceType::Hydrogen,
             StationType::Orbit,
             vec![(0.83, Technology::GasGiantMining)],
@@ -521,7 +521,7 @@ fn spawn_neptune<A: Material2d>(
         false,
         true,
         Some(0.6),
-        PlanetResources(vec![RawResource::new(
+        PlanetResources::new(vec![RawResource::new(
             RawResourceType::Hydrogen,
             StationType::Orbit,
             vec![(0.80, Technology::GasGiantMining)],

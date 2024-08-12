@@ -9,8 +9,8 @@ use bevy::{
 use super::{
     interaction::InteractionPalette,
     palette::{
-        BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, BUTTON_TEXT, HEADER_TEXT, LABEL_TEXT,
-        NODE_BACKGROUND,
+        BUTTON_HOVERED_BACKGROUND, BUTTON_PALETTE, BUTTON_PRESSED_BACKGROUND, BUTTON_TEXT,
+        HEADER_TEXT, LABEL_TEXT, NODE_BACKGROUND,
     },
 };
 
@@ -41,11 +41,7 @@ impl<T: Spawn> Widgets for T {
                 background_color: BackgroundColor(NODE_BACKGROUND),
                 ..default()
             },
-            InteractionPalette {
-                none: NODE_BACKGROUND,
-                hovered: BUTTON_HOVERED_BACKGROUND,
-                pressed: BUTTON_PRESSED_BACKGROUND,
-            },
+            BUTTON_PALETTE.clone(),
         ));
         entity.with_children(|children| {
             children.spawn((

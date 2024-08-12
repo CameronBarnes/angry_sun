@@ -1,4 +1,6 @@
-use bevy::{math::VectorSpace, prelude::*, utils::HashMap};
+use std::vec::Vec;
+
+use bevy::{prelude::*, utils::HashMap};
 use derive_more::derive::Display;
 
 use crate::{format_number, screen::Screen, ui::multi_progress_bar::MultiProgressBar};
@@ -98,11 +100,35 @@ impl HarvestedResources {
 }
 
 #[derive(Component, Debug, Clone)]
-pub struct PlanetResources(pub Vec<RawResource>);
+pub struct PlanetResources {
+    resources: Vec<RawResource>,
+}
 
 impl PlanetResources {
+    pub const fn new(resources: Vec<RawResource>) -> Self {
+        Self { resources }
+    }
+
+    pub fn get(&self, resource_type: RawResourceType) -> Option<&RawResource> {
+        self.resources
+            .iter()
+            .find(|res| res.name() == resource_type)
+    }
+
+    pub fn get_mut(&mut self, resource_type: RawResourceType) -> Option<&mut RawResource> {
+        self.resources
+            .iter_mut()
+            .find(|res| res.name() == resource_type)
+    }
+
+    pub fn slice(&self) -> &[RawResource] {
+        &self.resources
+    }
+
     pub fn apply_scale(&mut self, size: f32) {
-        self.0.iter_mut().for_each(|res| res.apply_scale(size));
+        self.resources
+            .iter_mut()
+            .for_each(|res| res.apply_scale(size));
     }
 }
 
@@ -334,9 +360,7 @@ fn consuming_structures(
                                     / (transform.translation().distance(Vec3::ZERO) / *ONE_AU))
                         };
                         resources
-                            .0
-                            .iter()
-                            .find(|res| res.name() == producing.res_type)
+                            .get(producing.res_type)
                             .map_or(true, |res| res.get_available(&tech) >= produced)
                     },
                 )
@@ -392,11 +416,7 @@ fn producing_structures(
             .planet
             .and_then(|entity| planet_resources_query.get_mut(entity).ok())
         {
-            if let Some(res) = planet_res
-                .0
-                .iter_mut()
-                .find(|res| res.name() == producing.res_type)
-            {
+            if let Some(res) = planet_res.get_mut(producing.res_type) {
                 if res.get_available(&tech) >= produced {
                     res.increment_consumed(produced);
                 }
@@ -426,11 +446,7 @@ pub fn update_planet_ui_resource_bar(
 ) {
     for (mut bar, label) in &mut bar_query {
         if let Ok(resources) = planet_query.get(label.0) {
-            if let Some(resource) = resources
-                .0
-                .iter()
-                .find(|resource| resource.name() == label.1)
-            {
+            if let Some(resource) = resources.get(label.1) {
                 let (consumed, available, unlockable) = resource.get_ratios(&tech);
                 let vals = bar.get_values_mut();
                 vals[0] = consumed * 100.;
@@ -448,11 +464,7 @@ fn update_resource_bar_text_label(
 ) {
     for (mut text, planet_res) in &mut label_query {
         if let Ok(resources) = planet_query.get(planet_res.0) {
-            if let Some(resource) = resources
-                .0
-                .iter()
-                .find(|resource| resource.name() == planet_res.1)
-            {
+            if let Some(resource) = resources.get(planet_res.1) {
                 text.sections[0].value = resource.get_ratios_text(&tech);
             }
         }
@@ -466,19 +478,11 @@ fn update_planet_resource_buy_cost_labels(
 ) {
     for (mut text, planet_res, cost_type) in &mut label_query {
         if let Ok((resources, harvesters)) = planet_query.get(planet_res.0) {
-            if let Some(resource) = resources
-                .0
-                .iter()
-                .find(|resource| resource.name() == planet_res.1)
-            {
+            if let Some(resource) = resources.get(planet_res.1) {
                 let mut cost = resource.cost(&tech);
-                #[allow(clippy::cast_precision_loss)]
-                let modifier = harvesters
-                    .0
-                    .get(&resource.name())
-                    .map_or(1., |vec| 1. + (vec.len() as f32 / 1000.));
-                cost.0 *= modifier;
-                cost.1 *= modifier;
+                let modifier = harvesters.0.get(&resource.name()).map_or(0, Vec::len);
+                cost.0 = cost_calculator(cost.0, modifier, 0.001);
+                cost.1 = cost_calculator(cost.1, modifier, 0.001);
                 match cost_type.0 {
                     RawResourceType::Metals => text.sections[0].value = format_number(cost.0),
                     RawResourceType::Silicate => text.sections[0].value = format_number(cost.1),
