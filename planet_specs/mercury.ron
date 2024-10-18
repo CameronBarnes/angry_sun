@@ -1,0 +1,14 @@
+PlanetSpec (
+    name: "Mercury",
+    orbit_radius: 68_400_000., // adjusted by 1.2 from 57 million for mercury specifically because it's so small
+	size: 4_879.,
+	orbital_period: 88.,
+    color: (183, 184, 185),
+	magnetic_field: false,
+	moon: false,
+	zoom_scale: Some(2.5),
+	resources: [
+			(Metals, Surface, [(0.07, ExtraTerrestrialMining), (0.7, DeepCrustMining)]),
+			(Silicate, Surface, [(0.03, ExtraTerrestrialMining), (0.3, DeepCrustMining)]),
+			],
+)

@@ -1,12 +1,13 @@
 use bevy::{prelude::*, utils::HashSet};
 use convert_case::{Case, Casing};
 use derive_more::derive::Display;
+use serde::Deserialize;
 
 pub(super) fn plugin(app: &mut App) {
     app.insert_resource(TechUnlocks::default());
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Display)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Display, Deserialize)]
 pub enum Technology {
     None,
     Orbitals,

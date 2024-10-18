@@ -4,7 +4,6 @@ use bevy_mod_picking::{prelude::PickSelection, selection::NoDeselect, PickableBu
 use sickle_ui::{prelude::*, widgets::layout::column};
 
 use crate::{
-    format_number,
     game::{
         highlight::LinkSelectionObject,
         planets::PlanetNameLabel,
@@ -18,6 +17,7 @@ use crate::{
     },
     screen::Screen,
     ui::palette::BUTTON_PALETTE,
+    utils::format_number,
 };
 
 use super::{

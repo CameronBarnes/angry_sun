@@ -2,8 +2,9 @@ use std::vec::Vec;
 
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::derive::Display;
+use serde::Deserialize;
 
-use crate::{format_number, screen::Screen, ui::multi_progress_bar::MultiProgressBar};
+use crate::{screen::Screen, ui::multi_progress_bar::MultiProgressBar, utils::format_number};
 
 use super::{
     spawn::planets::ONE_AU,
@@ -30,7 +31,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Display)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Display, Deserialize)]
 pub enum RawResourceType {
     Metals,
     Silicate,
@@ -39,7 +40,7 @@ pub enum RawResourceType {
     Power,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Display)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Display, Deserialize)]
 pub enum StationType {
     Surface,
     Ocean,
@@ -99,7 +100,7 @@ impl HarvestedResources {
     }
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Deserialize)]
 pub struct PlanetResources {
     resources: Vec<RawResource>,
 }
@@ -132,7 +133,7 @@ impl PlanetResources {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct RawResource {
     resource_type: RawResourceType,
     station_type: StationType,
@@ -276,7 +277,7 @@ pub fn cost_calculator(cost: f32, number: usize, mult: f32) -> f32 {
 #[derive(Debug, Component, Default)]
 pub struct BuiltHarvesters(pub HashMap<RawResourceType, Vec<Entity>>);
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut)]
 pub struct EnabledStructure(pub bool);
 
 trait Requirement {

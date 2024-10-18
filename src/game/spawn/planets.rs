@@ -13,6 +13,7 @@ use bevy_mod_picking::{
     prelude::On,
     PickableBundle,
 };
+use serde::Deserialize;
 
 use crate::{
     game::{
@@ -529,6 +530,61 @@ fn spawn_neptune<A: Material2d>(
     );
 }
 
+#[derive(Debug, Deserialize)]
+struct PlanetSpec {
+    name: String,
+    orbit_radius: f32,
+    size: f32,
+    orbital_period: f32,
+    color: (u8, u8, u8),
+    magnetic_field: bool,
+    moon: bool,
+    zoom_scale: Option<f32>,
+    resources: PlanetResources,
+}
+
+#[must_use]
+fn make_orbit_ring<A: Material2d>(
+    radius: f32,
+    width: f32,
+    width_modifier: f32,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    orbit_circle: Handle<A>,
+    planet: Entity,
+    hidden: bool,
+) -> impl Bundle {
+    (
+        OrbitRing,
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(
+                meshes.add(
+                    Annulus::new(
+                        width.mul_add(-width_modifier, radius),
+                        width.mul_add(width_modifier, radius),
+                    )
+                    .mesh()
+                    .resolution(MESH_RESOLUTION)
+                    .build(),
+                ),
+            ),
+            material: orbit_circle,
+            transform: Transform::from_xyz(0., 0., -2.),
+            visibility: if hidden {
+                Visibility::Hidden
+            } else {
+                Visibility::default()
+            },
+            ..Default::default()
+        },
+        StateScoped(Screen::Playing),
+        LinkSelectionObject(planet),
+        PickableBundle::default(),
+        On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
+            commands.trigger(ClearFinishZoomEvent);
+        }),
+    )
+}
+
 // FIXME: Fix the too many lines issue by breaking this up
 #[allow(clippy::too_many_lines)]
 fn spawn_planet<A: Material2d>(
@@ -643,57 +699,27 @@ fn spawn_planet<A: Material2d>(
 
     // Spawn the orbit circle
     let orbit_id = commands
-        .spawn((
-            OrbitRing,
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(
-                        Annulus::new(scaled_radius - border_width, scaled_radius + border_width)
-                            .mesh()
-                            .resolution(MESH_RESOLUTION)
-                            .build(),
-                    ),
-                ),
-                material: orbit_circle.clone(),
-                transform: Transform::from_xyz(0., 0., -2.),
-                ..Default::default()
-            },
-            StateScoped(Screen::Playing),
-            LinkSelectionObject(planet),
-            PickableBundle::default(),
-            On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
-                commands.trigger(ClearFinishZoomEvent);
-            }),
+        .spawn(make_orbit_ring(
+            scaled_radius,
+            border_width,
+            1.,
+            meshes,
+            orbit_circle.clone(),
+            planet,
+            false,
         ))
         .id();
 
     // We want a second bigger orbit circle for selection purposes
     let orbit_selection_circle = commands
-        .spawn((
-            OrbitRing,
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(
-                    meshes.add(
-                        Annulus::new(
-                            border_width.mul_add(-width_modifier, scaled_radius),
-                            border_width.mul_add(width_modifier, scaled_radius),
-                        )
-                        .mesh()
-                        .resolution(MESH_RESOLUTION)
-                        .build(),
-                    ),
-                ),
-                material: orbit_circle,
-                transform: Transform::from_xyz(0., 0., -2.),
-                visibility: Visibility::Hidden,
-                ..Default::default()
-            },
-            StateScoped(Screen::Playing),
-            LinkSelectionObject(planet),
-            PickableBundle::default(),
-            On::<Pointer<Click>>::commands_mut(|_input, commands: &mut Commands| {
-                commands.trigger(ClearFinishZoomEvent);
-            }),
+        .spawn(make_orbit_ring(
+            scaled_radius,
+            border_width,
+            width_modifier,
+            meshes,
+            orbit_circle,
+            planet,
+            true,
         ))
         .id();
 

@@ -5,14 +5,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.14", features = ["wayland", "mp3"] }
+bevy = { version = "0.14", features = ["mp3"] }
 
-bevy_pancam = "0.13"
+bevy_pancam = "0.14"
 bevy_mod_picking = { version = "0.20", features = ["selection", "backend_raycast", "backend_bevy_ui"], default-features = false }
-sickle_ui = "0.2"
+sickle_ui = "0.4"
 
-derive_more = { version = "1.0", features = ["display"] }
+derive_more = { version = "1.0", features = ["display", "is_variant"] }
 convert_case = "0.6"
+ron = "0.8"
+serde = { version = "1.0", features = ["derive"] }
 
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [
