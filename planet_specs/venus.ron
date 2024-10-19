@@ -9,5 +9,5 @@ PlanetSpec (
 	resources: [
 			(Metals, Surface, [(0.05, HotSurfaceMining), (0.5, DeepCrustMining)]),
 			(Silicate, Surface, [(0.015, HotSurfaceMining), (0.15, DeepCrustMining)]),
-			],
+		],
 )

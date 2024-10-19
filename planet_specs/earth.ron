@@ -1,0 +1,14 @@
+PlanetSpec (
+    name: "Earth",
+	orbit_radius: 149_000_000.,
+	size: 12_756.,
+	orbital_period: 365.25,
+	color: (79, 76, 176),
+	moon: false,
+	resources: [
+		    (Metals, Surface, [(0.025, None), (0.05, DeepSeaMining), (0.5, DeepCrustMining)]),
+			(Silicate, Surface, [(0.00725, None), (0.015, DeepSeaMining), (0.15, DeepCrustMining)]),
+			(Oxygen, Ocean, [(0.003, None), (0.03, SeaWaterElectrolysis)]),
+			(Hydrogen, Ocean, [(0.0005, None), (0.03, SeaWaterElectrolysis)]),
+		]
+)
